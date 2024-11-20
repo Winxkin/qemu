@@ -117,14 +117,15 @@ static const MemoryRegionOps sha3_512_device_ops =
 static void sha3_512_device_init(Object *obj) 
 {
     PQCSHA3_512_State *s = PQCSHA3_512(obj);
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
 
     // // Initialize memory region
     memory_region_init_io(s->parent_obj.mmio[0].memory, obj, &sha3_512_device_ops, s,"sha3_512_device_mmio", SHA3_512_REG_COUNT * sizeof(uint32_t));
 
-    sysbus_init_mmio(SYS_BUS_DEVICE(obj), s->parent_obj.mmio[0].memory);
+    sysbus_init_mmio(sbd, s->parent_obj.mmio[0].memory);
 
     // // Initialize IRQ
-    sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->irq);
+    sysbus_init_irq(sbd, &s->irq);
 
     // // Set default values
     // s->input_len = 0;

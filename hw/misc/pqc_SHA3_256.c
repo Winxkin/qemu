@@ -117,14 +117,15 @@ static const MemoryRegionOps sha3_256_device_ops =
 static void sha3_256_device_init(Object *obj) 
 {
     PQCSHA3_256_State *s = PQCSHA3_256(obj);
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
 
     // // Initialize memory region
     memory_region_init_io(s->parent_obj.mmio[0].memory, obj, &sha3_256_device_ops, s,"sha3_256_device_mmio", SHA3_256_REG_COUNT * sizeof(uint32_t));
 
-    sysbus_init_mmio(SYS_BUS_DEVICE(obj), s->parent_obj.mmio[0].memory);
+    sysbus_init_mmio(sbd, s->parent_obj.mmio[0].memory);
 
     // // Initialize IRQ
-    sysbus_init_irq(SYS_BUS_DEVICE(obj), &s->irq);
+    sysbus_init_irq(sbd, &s->irq);
 
     // // Set default values
     // s->input_len = 0;
@@ -140,14 +141,6 @@ static void sha3_256_device_class_init(ObjectClass *klass, void *data) {
     // dc->reset = NULL;  // Optional: Implement reset function if needed
     // dc->realize = NULL; // Optional: Implement realize function if needed
 }
-
-// DeviceState *sha3_256_device_create(hwaddr addr)
-// {
-//     DeviceState *dev = qdev_new(TYPE_PQC_SHA3_256);
-//     sysbus_realize_and_unref(SYS_BUS_DEVICE(dev), &error_fatal);
-//     sysbus_mmio_map(SYS_BUS_DEVICE(dev), 0, addr);
-//     return dev;
-// }
 
 
 static const TypeInfo sha3_256_device_info = 
