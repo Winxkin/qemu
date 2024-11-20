@@ -215,4 +215,13 @@ config IOSB
 config XLNX_VERSAL_TRNG
     bool
 
+config PQC_SHA3_128
+    bool
+
+config PQC_SHA3_256
+    bool
+
+config PQC_SHA3_512
+    bool
+  
 source macio/Kconfig

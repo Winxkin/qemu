@@ -152,3 +152,9 @@ system_ss.add(when: 'CONFIG_SBSA_REF', if_true: files('sbsa_ec.c'))
 
 # HPPA devices
 system_ss.add(when: 'CONFIG_LASI', if_true: files('lasi.c'))
+
+# PQC_SHA3
+system_ss.add(when: 'CONFIG_PQC_SHA3_128',if_true: files('pqc_sha3_128.c'))
+system_ss.add(when: 'CONFIG_PQC_SHA3_256',if_true: files('pqc_sha3_256.c'))
+system_ss.add(when: 'CONFIG_PQC_SHA3_512',if_true: files('pqc_sha3_512.c'))
+
