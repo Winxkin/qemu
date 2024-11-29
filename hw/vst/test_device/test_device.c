@@ -40,10 +40,10 @@ static void test_device_realize(DeviceState *dev, Error **errp)
 {
     Testdevice *tsd = TEST_DEVICE(dev);
 
-    memory_region_init_io(tsd->parent.mmio[0].memory, OBJECT(dev), 
-                &test_device_ops, tsd,"test-device", 4 * sizeof(uint32_t));
+    memory_region_init_io(&tsd->io, OBJECT(dev), 
+                &test_device_ops, tsd,"test-device", 0x1000);
 
-    sysbus_init_mmio(SYS_BUS_DEVICE(tsd), tsd->parent.mmio[0].memory);
+    sysbus_init_mmio(SYS_BUS_DEVICE(tsd), &tsd->io);
     sysbus_init_irq(SYS_BUS_DEVICE(tsd), &tsd->irq);
 
     qemu_log("test device initialized\n");

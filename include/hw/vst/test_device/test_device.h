@@ -12,6 +12,7 @@ struct Testdevice {
     SysBusDevice parent;
     uint32_t reg_value;
     qemu_irq irq;  // IRQ line
+    MemoryRegion io;
 };
 
 Testdevice *test_device_init(MemoryRegion *address_space,
