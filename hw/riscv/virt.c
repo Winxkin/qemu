@@ -56,6 +56,7 @@
 #include "hw/acpi/aml-build.h"
 #include "qapi/qapi-visit-common.h"
 #include "hw/virtio/virtio-iommu.h"
+#include "hw/vst/test_device/test_device.h"
 
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool virt_use_kvm_aia(RISCVVirtState *s)
@@ -89,6 +90,7 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_PCIE_ECAM] =    { 0x30000000,    0x10000000 },
     [VIRT_PCIE_MMIO] =    { 0x40000000,    0x40000000 },
     // [VIRT_DRAM] =         { 0x80000000,           0x0 },
+    [VIRT_TEST_DEVICE] =  { 0x80000000,          0x100},
     [VIRT_DRAM] =         { 0x90000000,           0x0 },
 };
 
@@ -1058,6 +1060,27 @@ static void create_fdt_iommu(RISCVVirtState *s, uint16_t bdf)
                            bdf + 1, iommu_phandle, bdf + 1, 0xffff - bdf);
 }
 
+/*Define your custom create_fdt functions in here*/
+static void create_fdt_test_devcie(RISCVVirtState *s, const MemMapEntry *memmap,
+                            uint32_t irq_mmio_phandle)
+{
+    g_autofree char *name = NULL;
+    MachineState *ms = MACHINE(s);
+
+    name = g_strdup_printf("/soc/test-device@%lx", (long)memmap[VIRT_TEST_DEVICE].base);
+    qemu_fdt_add_subnode(ms->fdt, name);
+    qemu_fdt_setprop_string(ms->fdt, name, "compatible", "test-device");
+    qemu_fdt_setprop_cells(ms->fdt, name, "reg",
+        0x0, memmap[VIRT_TEST_DEVICE].base,
+        0x0, memmap[VIRT_TEST_DEVICE].size);
+    qemu_fdt_setprop_cell(ms->fdt, name, "interrupt-parent", irq_mmio_phandle);
+    qemu_fdt_setprop_cell(ms->fdt, name, "interrupts", TEST_DEVICE_IRQ);
+    qemu_fdt_setprop_string(ms->fdt, "/chosen", "stdout-path", name);
+}
+
+
+/*------------------------------------------------*/
+
 static void finalize_fdt(RISCVVirtState *s)
 {
     uint32_t phandle = 1, irq_mmio_phandle = 1, msi_pcie_phandle = 1;
@@ -1076,6 +1099,9 @@ static void finalize_fdt(RISCVVirtState *s)
     create_fdt_uart(s, virt_memmap, irq_mmio_phandle);
 
     create_fdt_rtc(s, virt_memmap, irq_mmio_phandle);
+
+    /*Add your custom create_fdt in here*/
+    create_fdt_test_devcie(s, virt_memmap, irq_mmio_phandle);
 }
 
 static void create_fdt(RISCVVirtState *s, const MemMapEntry *memmap)
@@ -1632,6 +1658,12 @@ static void virt_machine_init(MachineState *machine)
 
     sysbus_create_simple("goldfish_rtc", memmap[VIRT_RTC].base,
         qdev_get_gpio_in(mmio_irqchip, RTC_IRQ));
+
+    /*init your custom device in here*/
+    test_device_init(system_memory, memmap[VIRT_TEST_DEVICE].base,
+        qdev_get_gpio_in(mmio_irqchip, TEST_DEVICE_IRQ));
+
+    /*-----------------------------------*/
 
     for (i = 0; i < ARRAY_SIZE(s->flash); i++) {
         /* Map legacy -drive if=pflash to machine properties */

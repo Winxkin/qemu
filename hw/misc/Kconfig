@@ -215,9 +215,4 @@ config IOSB
 config XLNX_VERSAL_TRNG
     bool
 
-config PQC_SHA3
-    bool
-    default y
-    select SSI
-
 source macio/Kconfig

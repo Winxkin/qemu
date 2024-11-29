@@ -1,0 +1,1 @@
+system_ss.add(when: 'CONFIG_TEST_DEVICE', if_true: files('test_device/test_device.c'))
