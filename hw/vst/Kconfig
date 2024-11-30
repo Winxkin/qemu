@@ -1,0 +1,3 @@
+config VST_TEST_DEVICE
+    bool
+    default y

@@ -60,7 +60,6 @@ config RISCV_VIRT
     select PLATFORM_BUS
     select ACPI
     select ACPI_PCI
-    select PQC_SHA3
 
 
 config SHAKTI_C
