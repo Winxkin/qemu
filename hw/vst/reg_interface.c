@@ -21,9 +21,6 @@ uint32_t read_register(Register *reg) {
         return 0;
     }
     qemu_log("Reading from register %s at base address 0x%X : value = 0x%X\n", reg->name, reg->base_addr, reg->value);
-    if (reg->callback) {
-        reg->callback(reg, reg->value);  // Invoke callback on read if defined
-    }
     return reg->value;
 }
 
