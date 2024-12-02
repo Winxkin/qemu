@@ -12,30 +12,30 @@
 #define REG_03 0x08
 #define REG_04 0x0C
 #define MAX_REG 4
-Register *tsd_reg_list[MAX_REG];
+Register32 *tsd_reg_list[MAX_REG];
 
-void cb_reg_01(Register *reg, uint32_t value) {
+void cb_reg_01(Register32 *reg, uint32_t value) {
     qemu_log("[test-device] Callback for register %s invoked with value 0x%X\n", reg->name, value);
 }
 
-void cb_reg_02(Register *reg, uint32_t value) {
+void cb_reg_02(Register32 *reg, uint32_t value) {
     qemu_log("[test-device] Callback for register %s invoked with value 0x%X\n", reg->name, value);
 }
 
-void cb_reg_03(Register *reg, uint32_t value) {
+void cb_reg_03(Register32 *reg, uint32_t value) {
     qemu_log("[test-device] Callback for register %s invoked with value 0x%X\n", reg->name, value);
 }
 
-void cb_reg_04(Register *reg, uint32_t value) {
+void cb_reg_04(Register32 *reg, uint32_t value) {
     qemu_log("[test-device] Callback for register %s invoked with value 0x%X\n", reg->name, value);
 }
 
 void test_device_register_init(void)
 {
-    tsd_reg_list[0] = create_register("REG_01", REG_01, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_01);
-    tsd_reg_list[1] = create_register("REG_02", REG_02, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_02);
-    tsd_reg_list[2] = create_register("REG_03", REG_03, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_03);
-    tsd_reg_list[3] = create_register("REG_04", REG_04, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_04);
+    tsd_reg_list[0] = create_register32("REG_01", REG_01, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_01);
+    tsd_reg_list[1] = create_register32("REG_02", REG_02, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_02);
+    tsd_reg_list[2] = create_register32("REG_03", REG_03, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_03);
+    tsd_reg_list[3] = create_register32("REG_04", REG_04, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_04);
 }
 
 /*This is template code for registration new device in qemu*/
@@ -48,7 +48,7 @@ static uint64_t test_device_read(void *opaque, hwaddr addr, unsigned size)
     {
         if ((uint32_t)addr == tsd_reg_list[i]->base_addr) 
         {
-            value = read_register(tsd_reg_list[i]);
+            value = read_register32(tsd_reg_list[i]);
             break;
         }
     }
@@ -63,7 +63,7 @@ static void test_device_write(void *opaque, hwaddr addr,
     {
         if ((uint32_t)addr == tsd_reg_list[i]->base_addr) 
         {
-            write_register(tsd_reg_list[i], value);
+            write_register32(tsd_reg_list[i], value);
         }
     }
 }
