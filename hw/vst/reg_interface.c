@@ -31,6 +31,7 @@ void write_register(Register *reg, uint32_t value) {
         return;
     }
     qemu_log("Writing to register %s at base address 0x%X : value = 0x%X\n", reg->name, reg->base_addr, value);
+    reg->pre_value = reg->value; // Save the previous value
     reg->value = value & reg->mask; // Mask the value to the register's mask
     if (reg->callback) {
         reg->callback(reg, value);  // Invoke callback on write if defined
