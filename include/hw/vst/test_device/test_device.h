@@ -16,10 +16,10 @@ struct Testdevice {
     MemoryRegion io;
 };
 
-void cb_reg_01(Register *reg, uint32_t value);
-void cb_reg_02(Register *reg, uint32_t value);
-void cb_reg_03(Register *reg, uint32_t value);
-void cb_reg_04(Register *reg, uint32_t value);
+void cb_reg_01(Register32 *reg, uint32_t value);
+void cb_reg_02(Register32 *reg, uint32_t value);
+void cb_reg_03(Register32 *reg, uint32_t value);
+void cb_reg_04(Register32 *reg, uint32_t value);
 void test_device_register_init(void);
 
 Testdevice *test_device_init(MemoryRegion *address_space,
