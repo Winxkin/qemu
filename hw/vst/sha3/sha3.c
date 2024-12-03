@@ -33,6 +33,9 @@
 #define MAX_REG 20
 Register32 *sha3_reg_list[MAX_REG];
 
+// Define additional functions in here
+void set_bits(uint32_t *reg_val, uint32_t value, uint32_t bit_start, uint32_t bit_end);
+
 enum REGISTER_NAME 
 {
     eCONTROL_REG = 0,
@@ -57,6 +60,20 @@ enum REGISTER_NAME
     eOUTPUT_REG15
 };
 
+// set bit for register
+void set_bits(uint32_t *reg_val, uint32_t value, uint32_t bit_start, uint32_t bit_end) 
+{
+    // Create a mask to clear the bits between bit_start and bit_end
+    uint32_t mask = ((1 << (bit_end - bit_start + 1)) - 1) << bit_start;
+    
+    // Clear the bits in the register (set the target bits to 0)
+    *reg_val &= ~mask;
+    
+    // Insert the new value into the cleared bit positions
+    *reg_val |= (value << bit_start) & mask;
+}
+
+
 // callback for register
 void cb_input_reg(Register32 *reg, uint32_t value) 
 {
@@ -69,7 +86,7 @@ void cb_input_reg(Register32 *reg, uint32_t value)
     else
     {
         // sha3 process
-        
+
     }
 }
 
