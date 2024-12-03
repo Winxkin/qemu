@@ -15,20 +15,47 @@
 #define SHA3_INPUT_REG      0x0C
 #define SHA3_OUTPUT_REG(i)  (0x10 + i*0x04) // 16 register i from 0 to 15 address base 0x10 to 0x40
 
-// define bit for SHA3_CONTROL_REG
-// bit 0: reset
-// bit 1-2: mode
+/*
+---Define bit for SHA3_CONTROL_REG---
+    bit 0: reset : default 0x01
+        - 0x00 : not reset
+        - 0x01 : reset
+    bit 1-2: mode : default 0x00
+        - 0x00 : sha3_128
+        - 0x01 : sha3_224
+        - 0x02 : sha3_256
+        - 0x03 : sha3_384
+        - 0x04 : sha3_512
+    bit 3-31: reserved
+*/
 #define CONTROL_RESET_BIT(val) ((val >> 0) & 0x1)
 #define CONTROL_MODE_BIT(val)  ((val >> 1) & 0x03) 
 
-// define bit for SHA3_STATUS_REG
-// bit 0: ready
-// bit 1: done
-// bit 2: error
+/*
+---Define bit for SHA3_STATUS_REG---
+    bit 0: ready : default 0x00
+        - 0x00 : not ready
+        - 0x01 : ready
+    bit 1: done : default 0x00
+        - 0x00 : not done
+        - 0x01 : done
+    bit 2: error : default 0x00
+        - 0x00 : no error
+        - 0x01 : error
+    bit 3-31: reserved
+*/
 #define STATUS_READY_BIT(val) ((val >> 0) & 0x1)
 #define STATUS_DONE_BIT(val)  ((val >> 1) & 0x1)
 #define STATUS_ERROR_BIT(val) ((val >> 2) & 0x1)
 
+/*
+---Define bit for SHA3_INPUTLEN_REG---
+    bit 0-31: input length : default 0x00
+---Define bit for SHA3_INPUT_REG---
+    bit 0-31: input data : default 0x00
+---Define bit for SHA3_OUTPUT_REG(i), i = [0,15]---
+    bit 0-31: output data : default 0x00
+*/
 
 #define MAX_REG 20
 Register32 *sha3_reg_list[MAX_REG];
@@ -60,6 +87,12 @@ enum REGISTER_NAME
     eOUTPUT_REG15
 };
 
+struct sha3_128_ctx _sha3_128_ctx;
+struct sha3_224_ctx _sha3_224_ctx;
+struct sha3_256_ctx _sha3_256_ctx;
+struct sha3_384_ctx _sha3_384_ctx;
+struct sha3_512_ctx _sha3_512_ctx;
+
 // set bit for register
 void set_bits(uint32_t *reg_val, uint32_t value, uint32_t bit_start, uint32_t bit_end) 
 {
@@ -81,18 +114,56 @@ void cb_input_reg(Register32 *reg, uint32_t value)
     // check reset bit
     if(CONTROL_RESET_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
     {
-        // reset sha3 cxt
+        switch(CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value))
+        {
+            case 0x00:
+                sha3_128_init(&_sha3_128_ctx);
+                break;
+            case 0x01:
+                sha3_224_init(&_sha3_224_ctx);
+                break;
+            case 0x02:
+                sha3_256_init(&_sha3_256_ctx);
+                break;
+            case 0x03:
+                sha3_384_init(&_sha3_384_ctx);
+                break;
+            case 0x04:
+                sha3_512_init(&_sha3_512_ctx);
+                break;
+            default:
+                break;
+        }
     }
     else
     {
         // sha3 process
-
+        switch(CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value))
+        {
+            case 0x00:
+                sha3_128_update(&_sha3_128_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&value);
+                break;
+            case 0x01:
+                sha3_224_update(&_sha3_224_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&value);
+                break;
+            case 0x02:
+                sha3_256_update(&_sha3_256_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&value);
+                break;
+            case 0x03:
+                sha3_384_update(&_sha3_384_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&value);
+                break;
+            case 0x04:
+                sha3_512_update(&_sha3_512_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&value);
+                break;
+            default:
+                break;
+        }
     }
 }
 
 void sha3_register_init(void)
 {
-    sha3_reg_list[eCONTROL_REG]  = create_register32("SHA3_CONTROL_REG" , SHA3_CONTROL_REG   , REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
+    sha3_reg_list[eCONTROL_REG]  = create_register32("SHA3_CONTROL_REG" , SHA3_CONTROL_REG   , REG_READ_WRITE, 0x01, 0xFFFFFFFF, NULL);
     sha3_reg_list[eSTATUS_REG]   = create_register32("SHA3_STATUS_REG"  , SHA3_STATUS_REG    , REG_READ_ONLY , 0, 0xFFFFFFFF, NULL);   
     sha3_reg_list[eINPUTLEN_REG] = create_register32("SHA3_INPUTLEN_REG", SHA3_INPUTLEN_REG  , REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
     sha3_reg_list[eINPUT_REG]    = create_register32("SHA3_INPUT_REG"   , SHA3_INPUT_REG     , REG_READ_WRITE, 0, 0xFFFFFFFF, cb_input_reg);
