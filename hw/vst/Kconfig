@@ -1,3 +1,7 @@
 config VST_TEST_DEVICE
     bool
     default y
+
+config VST_SHA3
+    bool
+    default y
