@@ -15,7 +15,6 @@ struct SHA3device {
     MemoryRegion io;
 };
 
-void cb_input_reg(Register32 *reg, uint32_t value); 
 
 void sha3_register_init(void);
 
