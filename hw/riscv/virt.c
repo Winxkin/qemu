@@ -57,6 +57,7 @@
 #include "qapi/qapi-visit-common.h"
 #include "hw/virtio/virtio-iommu.h"
 #include "hw/vst/test_device/test_device.h"
+#include "hw/vst/sha3/sha3.h"
 
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool virt_use_kvm_aia(RISCVVirtState *s)
@@ -91,6 +92,7 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_PCIE_MMIO] =    { 0x40000000,    0x40000000 },
     // [VIRT_DRAM] =         { 0x80000000,           0x0 },
     [VIRT_TEST_DEVICE] =  { 0x80000000,         0x1000},
+    [VIRT_SHA3] =         { 0x80001000,         0x1000},
     [VIRT_DRAM] =         { 0x90000000,           0x0 },
 };
 
@@ -1078,6 +1080,23 @@ static void create_fdt_test_devcie(RISCVVirtState *s, const MemMapEntry *memmap,
     qemu_fdt_setprop_string(ms->fdt, "/chosen", "stdout-path", name);
 }
 
+static void create_fdt_sha3(RISCVVirtState *s, const MemMapEntry *memmap,
+                            uint32_t irq_mmio_phandle)
+{
+    g_autofree char *name = NULL;
+    MachineState *ms = MACHINE(s);
+
+    name = g_strdup_printf("/soc/sha3@%lx", (long)memmap[VIRT_SHA3].base);
+    qemu_fdt_add_subnode(ms->fdt, name);
+    qemu_fdt_setprop_string(ms->fdt, name, "compatible", "sha3");
+    qemu_fdt_setprop_cells(ms->fdt, name, "reg",
+        0x0, memmap[VIRT_SHA3].base,
+        0x0, memmap[VIRT_SHA3].size);
+    qemu_fdt_setprop_cell(ms->fdt, name, "interrupt-parent", irq_mmio_phandle);
+    qemu_fdt_setprop_cell(ms->fdt, name, "interrupts", TEST_DEVICE_IRQ);
+    qemu_fdt_setprop_string(ms->fdt, "/chosen", "stdout-path", name);
+}
+
 
 /*------------------------------------------------*/
 
@@ -1102,6 +1121,7 @@ static void finalize_fdt(RISCVVirtState *s)
 
     /*Add your custom create_fdt in here*/
     create_fdt_test_devcie(s, virt_memmap, irq_mmio_phandle);
+    create_fdt_sha3(s, virt_memmap, irq_mmio_phandle);
 }
 
 static void create_fdt(RISCVVirtState *s, const MemMapEntry *memmap)
@@ -1662,6 +1682,9 @@ static void virt_machine_init(MachineState *machine)
     /*init your custom device in here*/
     test_device_init(system_memory, memmap[VIRT_TEST_DEVICE].base,
         qdev_get_gpio_in(mmio_irqchip, TEST_DEVICE_IRQ));
+
+    sha3_init(system_memory, memmap[VIRT_SHA3].base,
+        qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ));
 
     /*-----------------------------------*/
 
