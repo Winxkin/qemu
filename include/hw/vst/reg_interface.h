@@ -16,7 +16,7 @@ typedef void (*RegisterCallback64)(struct Register64 *reg, uint64_t value);
 typedef enum {
     REG_READ_ONLY = 1,
     REG_WRITE_ONLY = 2,
-    REG_READ_WRITE = REG_READ_ONLY | REG_WRITE_ONLY
+    REG_READ_WRITE = 3
 } RegPermission;
 
 // Structure to represent a register

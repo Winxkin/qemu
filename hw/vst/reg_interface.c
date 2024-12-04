@@ -29,7 +29,7 @@ Register64* create_register64(const char *name, uint32_t base_addr, RegPermissio
 
 // Function to read from a register
 uint32_t read_register32(Register32 *reg) {
-    if (!(reg->permissions & REG_READ_ONLY)) {
+    if (reg->permissions == REG_WRITE_ONLY) {
         qemu_log("Error: Register %s is write-only.\n", reg->name);
         return 0;
     }
@@ -38,7 +38,7 @@ uint32_t read_register32(Register32 *reg) {
 }
 
 uint64_t read_register64(Register64 *reg) {
-    if (!(reg->permissions & REG_READ_ONLY)) {
+    if (reg->permissions == REG_WRITE_ONLY) {
         qemu_log("Error: Register %s is write-only.\n", reg->name);
         return 0;
     }
@@ -48,7 +48,7 @@ uint64_t read_register64(Register64 *reg) {
 
 // Function to write to a register
 void write_register32(Register32 *reg, uint32_t value) {
-    if (!(reg->permissions & REG_WRITE_ONLY) && !(reg->permissions & REG_READ_WRITE)) {
+    if ((reg->permissions == REG_READ_ONLY)) {
         qemu_log("Error: Register %s is read-only.\n", reg->name);
         return;
     }
@@ -61,7 +61,7 @@ void write_register32(Register32 *reg, uint32_t value) {
 }
 
 void write_register64(Register64 *reg, uint64_t value) {
-    if (!(reg->permissions & REG_WRITE_ONLY) && !(reg->permissions & REG_READ_WRITE)) {
+    if ((reg->permissions == REG_READ_ONLY)) {
         qemu_log("Error: Register %s is read-only.\n", reg->name);
         return;
     }
