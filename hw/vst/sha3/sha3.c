@@ -101,6 +101,7 @@ Register32 *sha3_reg_list[MAX_REG];
 
 // Define additional functions in here
 void set_bits(uint32_t *reg_val, uint32_t value, uint32_t bit_start, uint32_t bit_end);
+uint32_t little_to_big_endian(uint32_t value);
 
 // Define callback functions in here
 void cb_input_reg(Register32 *reg, uint32_t value);
@@ -167,6 +168,14 @@ void set_bits(uint32_t *reg_val, uint32_t value, uint32_t bit_start, uint32_t bi
     
     // Insert the new value into the cleared bit positions
     *reg_val |= (value << bit_start) & mask;
+}
+
+// Function to convert from Little Endian to Big Endian
+uint32_t little_to_big_endian(uint32_t value) {
+    return ((value >> 24) & 0xFF) |        // Move byte 0 to byte 3
+           ((value >> 8) & 0xFF00) |       // Move byte 1 to byte 2
+           ((value << 8) & 0xFF0000) |     // Move byte 2 to byte 1
+           ((value << 24) & 0xFF000000);   // Move byte 3 to byte 0
 }
 
 
@@ -307,7 +316,17 @@ void cb_input_reg(Register32 *reg, uint32_t value)
     if(CONTROL_SUSPEND_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x00)
     {
         // get input data from register
-        uint32_t input_data = value; // get input data from register 32 bits (4 bytes)
+        uint32_t input_data;
+        // get input data from register 32 bits (4 bytes)
+        if(CONTROL_ENDIAN_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
+        {
+            input_data = little_to_big_endian(value);
+        }
+        else
+        {
+            input_data = value;
+        }
+        
         set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x01, 0, 0); // set status ready
 
         if(sha3_reg_list[eINPUTLEN_REG]->value <= 0x04)
@@ -458,14 +477,29 @@ void cb_outputctrl_reg(Register32 *reg, uint32_t value)
     {
         if(index < 16)
         {
-            sha3_reg_list[eOUTPUT_REG]->value = *((uint32_t *)&sha3_output[index*4]);   // getting 4 bytes from sha3_output buffer
+            if(CONTROL_ENDIAN_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
+            {
+                sha3_reg_list[eOUTPUT_REG]->value = little_to_big_endian(*((uint32_t *)&sha3_output[index*4]));   // getting 4 bytes from sha3_output buffer
+            }
+            else
+            {
+                sha3_reg_list[eOUTPUT_REG]->value = *((uint32_t *)&sha3_output[index*4]);   // getting 4 bytes from sha3_output buffer
+            }
         }
     }
     else if(STATUS_SUSPEND_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
     {
         if(index < 50)
         {
-            sha3_reg_list[eOUTPUT_REG]->value = sha3_internal_state[index];  // assign internal state to output register
+            if(CONTROL_ENDIAN_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
+            {
+                sha3_reg_list[eOUTPUT_REG]->value = little_to_big_endian(sha3_internal_state[index]);  // assign internal state to output register
+
+            }
+            else
+            {
+                sha3_reg_list[eOUTPUT_REG]->value = sha3_internal_state[index];  // assign internal state to output register
+            }
         }
     }
 }
