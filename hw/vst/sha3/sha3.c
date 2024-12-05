@@ -108,10 +108,12 @@ void cb_input_reg(Register32 *reg, uint32_t value);
 void cb_outputctrl_reg(Register32 *reg, uint32_t value);
 void cb_control_reg(Register32 *reg, uint32_t value);
 void cb_outputlen_reg(Register32 *reg, uint32_t value);
+uint32_t uint8ArrayToUint32(const uint8_t* byteArray);
 
 // Define other functions
 void get_internal_state(void);
 void assign_internal_state(uint32_t value);
+void uint32ToUint8Array(uint32_t value, uint8_t* byteArray);
 
 enum REGISTER_NAME 
 {
@@ -176,6 +178,24 @@ uint32_t little_to_big_endian(uint32_t value) {
            ((value >> 8) & 0xFF00) |       // Move byte 1 to byte 2
            ((value << 8) & 0xFF0000) |     // Move byte 2 to byte 1
            ((value << 24) & 0xFF000000);   // Move byte 3 to byte 0
+}
+
+void uint32ToUint8Array(uint32_t value, uint8_t* byteArray) {
+    // Extract each byte of the uint32_t value
+    byteArray[0] = (value >> 24) & 0xFF; // Most significant byte
+    byteArray[1] = (value >> 16) & 0xFF;
+    byteArray[2] = (value >> 8) & 0xFF;
+    byteArray[3] = value & 0xFF;          // Least significant byte
+}
+
+uint32_t uint8ArrayToUint32(const uint8_t* byteArray) {
+    // Reconstruct the uint32_t value from the byte array
+    uint32_t value = 0;
+    value |= (uint32_t)byteArray[0] << 24; // Most significant byte
+    value |= (uint32_t)byteArray[1] << 16;
+    value |= (uint32_t)byteArray[2] << 8;
+    value |= (uint32_t)byteArray[3];       // Least significant byte
+    return value;
 }
 
 
@@ -304,7 +324,7 @@ void assign_internal_state(uint32_t value)
 // callback for register
 void cb_input_reg(Register32 *reg, uint32_t value) 
 {
-    qemu_log("[sha3] Callback for register %s invoked with value 0x%X\n", reg->name, value);
+    qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
     // check reset bit
     if(CONTROL_RESET_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
     {
@@ -317,6 +337,7 @@ void cb_input_reg(Register32 *reg, uint32_t value)
     {
         // get input data from register
         uint32_t input_data;
+        uint8_t  input_data_Array[4];
         // get input data from register 32 bits (4 bytes)
         if(CONTROL_ENDIAN_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
         {
@@ -326,6 +347,8 @@ void cb_input_reg(Register32 *reg, uint32_t value)
         {
             input_data = value;
         }
+
+        uint32ToUint8Array(input_data, input_data_Array);
         
         set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x01, 0, 0); // set status ready
 
@@ -336,31 +359,31 @@ void cb_input_reg(Register32 *reg, uint32_t value)
             {
                 case 0x00:
                 {
-                    sha3_224_update(&_sha3_224_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data);
+                    sha3_224_update(&_sha3_224_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
                     sha3_224_digest(&_sha3_224_ctx, SHA3_224_DIGEST_SIZE, (uint8_t *)&sha3_output); // reset internal state
                     break;
                 }
                 case 0x01:
                 {
-                    sha3_256_update(&_sha3_256_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data);
+                    sha3_256_update(&_sha3_256_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
                     sha3_256_digest(&_sha3_256_ctx, SHA3_256_DIGEST_SIZE, (uint8_t *)&sha3_output); // reset internal state
                     break;
                 }
                 case 0x02:
                 {
-                    sha3_384_update(&_sha3_384_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data);
+                    sha3_384_update(&_sha3_384_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
                     sha3_384_digest(&_sha3_384_ctx, SHA3_384_DIGEST_SIZE, (uint8_t *)&sha3_output); // reset internal state
                     break;
                 }
                 case 0x03:
                 {
-                    sha3_512_update(&_sha3_512_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data);
+                    sha3_512_update(&_sha3_512_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
                     sha3_512_digest(&_sha3_512_ctx, SHA3_512_DIGEST_SIZE, (uint8_t *)&sha3_output); // reset internal state
                     break;
                 }
                 case 0x04:
                 {
-                    sha3_128_update(&_shake_128_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&sha3_output);
+                    sha3_128_update(&_shake_128_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
                     if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x00)
                     {
                         if(sha3_reg_list[eOUTPUTLEN_REG]->value >= MAXIMUM_OUTPUT_SIZE)
@@ -387,7 +410,7 @@ void cb_input_reg(Register32 *reg, uint32_t value)
                 }
                 case 0x05:
                 {
-                    sha3_256_update(&_shake_256_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&sha3_output);
+                    sha3_256_update(&_shake_256_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
                     if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x00)
                     {
                         if(sha3_reg_list[eOUTPUTLEN_REG]->value >= MAXIMUM_OUTPUT_SIZE)
@@ -426,22 +449,22 @@ void cb_input_reg(Register32 *reg, uint32_t value)
             switch(CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value))
             {
                 case 0x00:
-                    sha3_224_update(&_sha3_224_ctx, 0x04, (uint8_t *)&input_data);
+                    sha3_224_update(&_sha3_224_ctx, 0x04, (uint8_t *)&input_data_Array);
                     break;
                 case 0x01:
-                    sha3_256_update(&_sha3_256_ctx, 0x04, (uint8_t *)&input_data);
+                    sha3_256_update(&_sha3_256_ctx, 0x04, (uint8_t *)&input_data_Array);
                     break;
                 case 0x02:
-                    sha3_384_update(&_sha3_384_ctx, 0x04, (uint8_t *)&input_data);
+                    sha3_384_update(&_sha3_384_ctx, 0x04, (uint8_t *)&input_data_Array);
                     break;
                 case 0x03:
-                    sha3_512_update(&_sha3_512_ctx, 0x04, (uint8_t *)&input_data);
+                    sha3_512_update(&_sha3_512_ctx, 0x04, (uint8_t *)&input_data_Array);
                     break;
                 case 0x04:
-                    sha3_128_update(&_shake_128_ctx, 0x04, (uint8_t *)&input_data);
+                    sha3_128_update(&_shake_128_ctx, 0x04, (uint8_t *)&input_data_Array);
                     break;
                 case 0x05:
-                    sha3_256_update(&_shake_256_ctx, 0x04, (uint8_t *)&input_data);
+                    sha3_256_update(&_shake_256_ctx, 0x04, (uint8_t *)&input_data_Array);
                     break;
                 default:
                     break;
@@ -470,7 +493,7 @@ void cb_input_reg(Register32 *reg, uint32_t value)
 
 void cb_outputctrl_reg(Register32 *reg, uint32_t value)
 {
-    qemu_log("[sha3] Callback for register %s invoked with value 0x%X\n", reg->name, value);
+    qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
     uint8_t index = OUTPUTCTRL_READ_PTR_BIT(value);
     // check bit status done or suspend
     if(STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
@@ -479,11 +502,11 @@ void cb_outputctrl_reg(Register32 *reg, uint32_t value)
         {
             if(CONTROL_ENDIAN_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
             {
-                sha3_reg_list[eOUTPUT_REG]->value = little_to_big_endian(*((uint32_t *)&sha3_output[index*4]));   // getting 4 bytes from sha3_output buffer
+                sha3_reg_list[eOUTPUT_REG]->value = little_to_big_endian(uint8ArrayToUint32(&sha3_output[index*4]));   // getting 4 bytes from sha3_output buffer
             }
             else
             {
-                sha3_reg_list[eOUTPUT_REG]->value = *((uint32_t *)&sha3_output[index*4]);   // getting 4 bytes from sha3_output buffer
+                sha3_reg_list[eOUTPUT_REG]->value = uint8ArrayToUint32(&sha3_output[index*4]);   // getting 4 bytes from sha3_output buffer
             }
         }
     }
@@ -506,7 +529,7 @@ void cb_outputctrl_reg(Register32 *reg, uint32_t value)
 
 void cb_outputlen_reg(Register32 *reg, uint32_t value)
 {
-    qemu_log("[sha3] Callback for register %s invoked with value 0x%X\n", reg->name, value);
+    qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
     if(CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x04 || CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x05)
     {
         if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01 && STATUS_READY_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x00)
@@ -528,7 +551,7 @@ void cb_outputlen_reg(Register32 *reg, uint32_t value)
 
 void cb_control_reg(Register32 *reg, uint32_t value)
 {
-    qemu_log("[sha3] Callback for register %s invoked with value 0x%X\n", reg->name, value);
+    qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
     if(CONTROL_RESET_BIT(value) == 0x01)
     {
         // reset all sha3 cxt

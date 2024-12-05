@@ -33,7 +33,7 @@ uint32_t read_register32(Register32 *reg) {
         qemu_log("Error: Register %s is write-only.\n", reg->name);
         return 0;
     }
-    qemu_log("Reading from register %s at base address 0x%X : value = 0x%X\n", reg->name, reg->base_addr, reg->value);
+    qemu_log("Reading from register %s at base address 0x%08X : value = 0x%08X\n", reg->name, reg->base_addr, reg->value);
     return reg->value;
 }
 
@@ -42,7 +42,7 @@ uint64_t read_register64(Register64 *reg) {
         qemu_log("Error: Register %s is write-only.\n", reg->name);
         return 0;
     }
-    qemu_log("Reading from register %s at base address 0x%X : value = 0x%lX\n", reg->name, reg->base_addr, reg->value);
+    qemu_log("Reading from register %s at base address 0x%08X : value = 0x%16lX\n", reg->name, reg->base_addr, reg->value);
     return reg->value;
 }
 
@@ -52,7 +52,7 @@ void write_register32(Register32 *reg, uint32_t value) {
         qemu_log("Error: Register %s is read-only.\n", reg->name);
         return;
     }
-    qemu_log("Writing to register %s at base address 0x%X : value = 0x%X\n", reg->name, reg->base_addr, value);
+    qemu_log("Writing to register %s at base address 0x%08X : value = 0x%08X\n", reg->name, reg->base_addr, value);
     reg->pre_value = reg->value; // Save the previous value
     reg->value = value & reg->mask; // Mask the value to the register's mask
     if (reg->callback) {
@@ -65,7 +65,7 @@ void write_register64(Register64 *reg, uint64_t value) {
         qemu_log("Error: Register %s is read-only.\n", reg->name);
         return;
     }
-    qemu_log("Writing to register %s at base address 0x%X : value = 0x%lX\n", reg->name, reg->base_addr, value);
+    qemu_log("Writing to register %s at base address 0x%08X : value = 0x%16lX\n", reg->name, reg->base_addr, value);
     reg->pre_value = reg->value; // Save the previous value
     reg->value = value & reg->mask; // Mask the value to the register's mask
     if (reg->callback) {
