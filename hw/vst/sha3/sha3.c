@@ -593,7 +593,6 @@ void sha3_register_init(void)
 
 static uint64_t sha3_read(void *opaque, hwaddr addr, unsigned size)
 {
-    qemu_log("[sha3] read at offset address 0x%X\n", (uint32_t)addr);
     uint32_t value = 0;
     for (int i = 0; i < MAX_REG; i++) 
     {
@@ -609,7 +608,6 @@ static uint64_t sha3_read(void *opaque, hwaddr addr, unsigned size)
 static void sha3_write(void *opaque, hwaddr addr,
                             uint64_t value, unsigned size)
 {
-    qemu_log("[sha3] write 0x%lX at offset address 0x%X\n", value, (uint32_t)addr);
     for (int i = 0; i < MAX_REG; i++) 
     {
         if ((uint32_t)addr == sha3_reg_list[i]->base_addr) 
