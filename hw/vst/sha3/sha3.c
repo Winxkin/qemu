@@ -359,31 +359,31 @@ void cb_input_reg(Register32 *reg, uint32_t value)
             {
                 case 0x00:
                 {
-                    sha3_224_update(&_sha3_224_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
+                    sha3_224_update(&_sha3_224_ctx, sha3_reg_list[eINPUTLEN_REG]->value, &input_data_Array[0]);
                     sha3_224_digest(&_sha3_224_ctx, SHA3_224_DIGEST_SIZE, (uint8_t *)&sha3_output); // reset internal state
                     break;
                 }
                 case 0x01:
                 {
-                    sha3_256_update(&_sha3_256_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
+                    sha3_256_update(&_sha3_256_ctx, sha3_reg_list[eINPUTLEN_REG]->value, &input_data_Array[0]);
                     sha3_256_digest(&_sha3_256_ctx, SHA3_256_DIGEST_SIZE, (uint8_t *)&sha3_output); // reset internal state
                     break;
                 }
                 case 0x02:
                 {
-                    sha3_384_update(&_sha3_384_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
+                    sha3_384_update(&_sha3_384_ctx, sha3_reg_list[eINPUTLEN_REG]->value, &input_data_Array[0]);
                     sha3_384_digest(&_sha3_384_ctx, SHA3_384_DIGEST_SIZE, (uint8_t *)&sha3_output); // reset internal state
                     break;
                 }
                 case 0x03:
                 {
-                    sha3_512_update(&_sha3_512_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
+                    sha3_512_update(&_sha3_512_ctx, sha3_reg_list[eINPUTLEN_REG]->value, &input_data_Array[0]);
                     sha3_512_digest(&_sha3_512_ctx, SHA3_512_DIGEST_SIZE, (uint8_t *)&sha3_output); // reset internal state
                     break;
                 }
                 case 0x04:
                 {
-                    sha3_128_update(&_shake_128_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
+                    sha3_128_update(&_shake_128_ctx, sha3_reg_list[eINPUTLEN_REG]->value, &input_data_Array[0]);
                     if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x00)
                     {
                         if(sha3_reg_list[eOUTPUTLEN_REG]->value >= MAXIMUM_OUTPUT_SIZE)
@@ -410,7 +410,7 @@ void cb_input_reg(Register32 *reg, uint32_t value)
                 }
                 case 0x05:
                 {
-                    sha3_256_update(&_shake_256_ctx, sha3_reg_list[eINPUTLEN_REG]->value, (uint8_t *)&input_data_Array);
+                    sha3_256_update(&_shake_256_ctx, sha3_reg_list[eINPUTLEN_REG]->value, &input_data_Array[0]);
                     if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x00)
                     {
                         if(sha3_reg_list[eOUTPUTLEN_REG]->value >= MAXIMUM_OUTPUT_SIZE)
@@ -449,22 +449,22 @@ void cb_input_reg(Register32 *reg, uint32_t value)
             switch(CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value))
             {
                 case 0x00:
-                    sha3_224_update(&_sha3_224_ctx, 0x04, (uint8_t *)&input_data_Array);
+                    sha3_224_update(&_sha3_224_ctx, 0x04, &input_data_Array[0]);
                     break;
                 case 0x01:
-                    sha3_256_update(&_sha3_256_ctx, 0x04, (uint8_t *)&input_data_Array);
+                    sha3_256_update(&_sha3_256_ctx, 0x04, &input_data_Array[0]);
                     break;
                 case 0x02:
-                    sha3_384_update(&_sha3_384_ctx, 0x04, (uint8_t *)&input_data_Array);
+                    sha3_384_update(&_sha3_384_ctx, 0x04, &input_data_Array[0]);
                     break;
                 case 0x03:
-                    sha3_512_update(&_sha3_512_ctx, 0x04, (uint8_t *)&input_data_Array);
+                    sha3_512_update(&_sha3_512_ctx, 0x04, &input_data_Array[0]);
                     break;
                 case 0x04:
-                    sha3_128_update(&_shake_128_ctx, 0x04, (uint8_t *)&input_data_Array);
+                    sha3_128_update(&_shake_128_ctx, 0x04, &input_data_Array[0]);
                     break;
                 case 0x05:
-                    sha3_256_update(&_shake_256_ctx, 0x04, (uint8_t *)&input_data_Array);
+                    sha3_256_update(&_shake_256_ctx, 0x04, &input_data_Array[0]);
                     break;
                 default:
                     break;
