@@ -324,7 +324,7 @@ void assign_internal_state(uint32_t value)
 // callback for register
 void cb_input_reg(Register32 *reg, uint32_t value) 
 {
-    qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
+    // qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
     // check reset bit
     if(CONTROL_RESET_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
     {
@@ -493,7 +493,7 @@ void cb_input_reg(Register32 *reg, uint32_t value)
 
 void cb_outputctrl_reg(Register32 *reg, uint32_t value)
 {
-    qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
+    // qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
     uint8_t index = OUTPUTCTRL_READ_PTR_BIT(value);
     // check bit status done or suspend
     if(STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
@@ -529,7 +529,7 @@ void cb_outputctrl_reg(Register32 *reg, uint32_t value)
 
 void cb_outputlen_reg(Register32 *reg, uint32_t value)
 {
-    qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
+    // qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
     if(CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x04 || CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x05)
     {
         if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01 && STATUS_READY_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x00)
@@ -551,7 +551,7 @@ void cb_outputlen_reg(Register32 *reg, uint32_t value)
 
 void cb_control_reg(Register32 *reg, uint32_t value)
 {
-    qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
+    // qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
     if(CONTROL_RESET_BIT(value) == 0x01)
     {
         // reset all sha3 cxt
