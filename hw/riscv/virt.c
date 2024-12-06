@@ -1093,7 +1093,9 @@ static void create_fdt_sha3(RISCVVirtState *s, const MemMapEntry *memmap,
         0x0, memmap[VIRT_SHA3].base,
         0x0, memmap[VIRT_SHA3].size);
     qemu_fdt_setprop_cell(ms->fdt, name, "interrupt-parent", irq_mmio_phandle);
-    qemu_fdt_setprop_cell(ms->fdt, name, "interrupts", TEST_DEVICE_IRQ);
+    // qemu_fdt_setprop_cell(ms->fdt, name, "interrupts", SHA3_IRQ_DONE);
+    // qemu_fdt_setprop_cell(ms->fdt, name, "interrupts", SHA3_IRQ_ERR);
+    qemu_fdt_setprop_cells(ms->fdt, name, "interrupts", SHA3_IRQ_DONE, 0x8, SHA3_IRQ_ERR, 0x4);
     qemu_fdt_setprop_string(ms->fdt, "/chosen", "stdout-path", name);
 }
 
@@ -1684,7 +1686,8 @@ static void virt_machine_init(MachineState *machine)
         qdev_get_gpio_in(mmio_irqchip, TEST_DEVICE_IRQ));
 
     sha3_init(system_memory, memmap[VIRT_SHA3].base,
-        qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ));
+        qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ_DONE), 
+        qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ_DONE));
 
     /*-----------------------------------*/
 

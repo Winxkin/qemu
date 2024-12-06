@@ -14,19 +14,24 @@
 #define MAX_REG 4
 Register32 *tsd_reg_list[MAX_REG];
 
-void cb_reg_01(Register32 *reg, uint32_t value) {
+void cb_reg_01(void *opaque, Register32 *reg, uint32_t value);
+void cb_reg_02(void *opaque, Register32 *reg, uint32_t value);
+void cb_reg_03(void *opaque, Register32 *reg, uint32_t value);
+void cb_reg_04(void *opaque, Register32 *reg, uint32_t value);
+
+void cb_reg_01(void *opaque, Register32 *reg, uint32_t value) {
     qemu_log("[test-device] Callback for register %s invoked with value 0x%X\n", reg->name, value);
 }
 
-void cb_reg_02(Register32 *reg, uint32_t value) {
+void cb_reg_02(void *opaque, Register32 *reg, uint32_t value) {
     qemu_log("[test-device] Callback for register %s invoked with value 0x%X\n", reg->name, value);
 }
 
-void cb_reg_03(Register32 *reg, uint32_t value) {
+void cb_reg_03(void *opaque, Register32 *reg, uint32_t value) {
     qemu_log("[test-device] Callback for register %s invoked with value 0x%X\n", reg->name, value);
 }
 
-void cb_reg_04(Register32 *reg, uint32_t value) {
+void cb_reg_04(void *opaque, Register32 *reg, uint32_t value) {
     qemu_log("[test-device] Callback for register %s invoked with value 0x%X\n", reg->name, value);
 }
 
@@ -48,7 +53,7 @@ static uint64_t test_device_read(void *opaque, hwaddr addr, unsigned size)
     {
         if ((uint32_t)addr == tsd_reg_list[i]->base_addr) 
         {
-            value = read_register32(tsd_reg_list[i]);
+            value = read_register32(opaque, tsd_reg_list[i]);
             break;
         }
     }
@@ -63,7 +68,7 @@ static void test_device_write(void *opaque, hwaddr addr,
     {
         if ((uint32_t)addr == tsd_reg_list[i]->base_addr) 
         {
-            write_register32(tsd_reg_list[i], value);
+            write_register32(opaque, tsd_reg_list[i], value);
         }
     }
 }

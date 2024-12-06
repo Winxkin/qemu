@@ -9,17 +9,18 @@
 #define TYPE_SHA3 "sha3"
 OBJECT_DECLARE_SIMPLE_TYPE(SHA3device, SHA3)
 
-struct SHA3device {
+typedef struct SHA3device {
     SysBusDevice parent;
-    qemu_irq irq;  // IRQ line
+    qemu_irq irq_err;  // IRQ line
+    qemu_irq irq_done; // IRQ line
     MemoryRegion io;
-};
+} SHA3device;
 
 
 void sha3_register_init(void);
 
 SHA3device *sha3_init(MemoryRegion *address_space,
-                         hwaddr base, qemu_irq irq);
+                         hwaddr base, qemu_irq irq_err, qemu_irq irq_done);
 
 
 #endif

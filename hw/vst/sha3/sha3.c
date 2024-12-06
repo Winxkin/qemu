@@ -1,5 +1,6 @@
 #include "qemu/osdep.h"
 #include "hw/vst/sha3/sha3.h"
+#include "hw/irq.h"
 #include "exec/cpu-common.h"
 #include "migration/vmstate.h"
 #include "qapi/error.h"
@@ -106,13 +107,14 @@ Register32 *sha3_reg_list[MAX_REG];
 // Define additional functions in here
 void set_bits(uint32_t *reg_val, uint32_t value, uint32_t bit_start, uint32_t bit_end);
 uint32_t little_to_big_endian(uint32_t value);
+uint32_t uint8ArrayToUint32(const uint8_t* byteArray);
 
 // Define callback functions in here
-void cb_input_reg(Register32 *reg, uint32_t value);
-void cb_outputctrl_reg(Register32 *reg, uint32_t value);
-void cb_control_reg(Register32 *reg, uint32_t value);
-void cb_outputlen_reg(Register32 *reg, uint32_t value);
-uint32_t uint8ArrayToUint32(const uint8_t* byteArray);
+void cb_input_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_outputctrl_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_control_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_outputlen_reg(void *opaque, Register32 *reg, uint32_t value);
+
 
 // Define other functions
 void get_internal_state(void);
@@ -326,9 +328,9 @@ void assign_internal_state(uint32_t value)
 
 
 // callback for register
-void cb_input_reg(Register32 *reg, uint32_t value) 
+void cb_input_reg(void *opaque, Register32 *reg, uint32_t value) 
 {
-    
+    SHA3device *sha3 = SHA3(opaque);
     // check reset bit
     if(CONTROL_RESET_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
     {
@@ -448,6 +450,8 @@ void cb_input_reg(Register32 *reg, uint32_t value)
             }
             // set status done
             set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x01, 1, 1);
+            // irq_done raise
+            qemu_irq_raise(sha3->irq_done);
             // clear status ready
             set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x00, 0, 0); 
         }
@@ -507,7 +511,7 @@ void cb_input_reg(Register32 *reg, uint32_t value)
     
 }
 
-void cb_outputctrl_reg(Register32 *reg, uint32_t value)
+void cb_outputctrl_reg(void *opaque, Register32 *reg, uint32_t value)
 {
     
     uint8_t index = OUTPUTCTRL_READ_PTR_BIT(value);
@@ -543,7 +547,7 @@ void cb_outputctrl_reg(Register32 *reg, uint32_t value)
     }
 }
 
-void cb_outputlen_reg(Register32 *reg, uint32_t value)
+void cb_outputlen_reg(void *opaque, Register32 *reg, uint32_t value)
 {
     
     switch(CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value))
@@ -607,8 +611,9 @@ void cb_outputlen_reg(Register32 *reg, uint32_t value)
     
 }
 
-void cb_control_reg(Register32 *reg, uint32_t value)
+void cb_control_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    SHA3device *sha3 = SHA3(opaque);
     // check reset bit
     if(CONTROL_RESET_BIT(value) == 0x01)
     {
@@ -665,36 +670,57 @@ void cb_control_reg(Register32 *reg, uint32_t value)
         case 0x00:
         {
             qemu_log("[sha3] sha3_224 mode\n");
+            // Clear bit error
+            set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x00, 2, 2);
             break;
         }
         case 0x01:
         {
             qemu_log("[sha3] sha3_256 mode\n");
+            // Clear bit error
+            set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x00, 2, 2);
             break;
         }
         case 0x02:
         {
             qemu_log("[sha3] sha3_384 mode\n");
+            // Clear bit error
+            set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x00, 2, 2);
             break;
         }
         case 0x03:
         {
             qemu_log("[sha3] sha3_512 mode\n");
+            // Clear bit error
+            set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x00, 2, 2);
             break;
         }
         case 0x04:
         {
             qemu_log("[sha3] shake_128 mode\n");
+            // Clear bit error
+            set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x00, 2, 2);
             break;
         }
         case 0x05:
         {
             qemu_log("[sha3] shake_256 mode\n");
+            // Clear bit error
+            set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x00, 2, 2);
             break;
         }
         default:
+        {
+            // Error occur when mode is not supported
+            set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x01, 2, 2); // set error bit
+            // irq_err raise
+            qemu_irq_raise(sha3->irq_err);
             break;
+        }
     }
+
+    
+    
     
 }
 
@@ -721,7 +747,7 @@ static uint64_t sha3_read(void *opaque, hwaddr addr, unsigned size)
     {
         if ((uint32_t)addr == sha3_reg_list[i]->base_addr) 
         {
-            value = read_register32(sha3_reg_list[i]);
+            value = read_register32(opaque, sha3_reg_list[i]);
             break;
         }
     }
@@ -735,7 +761,7 @@ static void sha3_write(void *opaque, hwaddr addr,
     {
         if ((uint32_t)addr == sha3_reg_list[i]->base_addr) 
         {
-            write_register32(sha3_reg_list[i], value);
+            write_register32(opaque, sha3_reg_list[i], value);
         }
     }
 }
@@ -765,19 +791,21 @@ static void sha3_realize(DeviceState *dev, Error **errp)
                 &sha3_ops, sha3,"sha3", 0x1000);
 
     sysbus_init_mmio(SYS_BUS_DEVICE(sha3), &sha3->io);
-    sysbus_init_irq(SYS_BUS_DEVICE(sha3), &sha3->irq);
+    sysbus_init_irq(SYS_BUS_DEVICE(sha3), &sha3->irq_done);
+    sysbus_init_irq(SYS_BUS_DEVICE(sha3), &sha3->irq_err);
 
 }
 
 SHA3device *sha3_init(MemoryRegion *address_space,
-                         hwaddr base, qemu_irq irq)
+                         hwaddr base, qemu_irq irq_err, qemu_irq irq_done)
 {
     SHA3device *sha3 = SHA3(qdev_new(TYPE_SHA3));
     MemoryRegion *mr;
 
    // Realize the device and connect IRQ
     sysbus_realize_and_unref(SYS_BUS_DEVICE(sha3), &error_fatal);
-    sysbus_connect_irq(SYS_BUS_DEVICE(sha3), 0, irq);
+    sysbus_connect_irq(SYS_BUS_DEVICE(sha3), 0, irq_done);
+    sysbus_connect_irq(SYS_BUS_DEVICE(sha3), 1, irq_err);
 
     mr = sysbus_mmio_get_region(SYS_BUS_DEVICE(sha3), 0);
     memory_region_add_subregion(address_space, base, mr);

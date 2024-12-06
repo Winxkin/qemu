@@ -2,7 +2,7 @@
 
 // Function to create a new register
 Register32* create_register32(const char *name, uint32_t base_addr, RegPermission permissions, uint32_t init,  uint32_t mask,
-                                    void (*callback)(Register32 *reg,uint32_t value))
+                                    void (*callback)(void *opaque, Register32 *reg,uint32_t value))
 {
     Register32 *reg = (Register32*)malloc(sizeof(Register32));
     reg->name = strdup(name);   // Duplicate the name to avoid issues with the pointer later
@@ -15,7 +15,7 @@ Register32* create_register32(const char *name, uint32_t base_addr, RegPermissio
 }
 
 Register64* create_register64(const char *name, uint32_t base_addr, RegPermission permissions, uint64_t init,  uint64_t mask,
-                                    void (*callback)(Register64 *reg,uint64_t value))
+                                    void (*callback)(void *opaque, Register64 *reg,uint64_t value))
 {
     Register64 *reg = (Register64*)malloc(sizeof(Register64));
     reg->name = strdup(name);   // Duplicate the name to avoid issues with the pointer later
@@ -28,7 +28,7 @@ Register64* create_register64(const char *name, uint32_t base_addr, RegPermissio
 }
 
 // Function to read from a register
-uint32_t read_register32(Register32 *reg) {
+uint32_t read_register32(void *opaque, Register32 *reg) {
     if (reg->permissions == REG_WRITE_ONLY) {
         qemu_log("Error: Register %s is write-only.\n", reg->name);
         return 0;
@@ -37,7 +37,7 @@ uint32_t read_register32(Register32 *reg) {
     return reg->value;
 }
 
-uint64_t read_register64(Register64 *reg) {
+uint64_t read_register64(void *opaque, Register64 *reg) {
     if (reg->permissions == REG_WRITE_ONLY) {
         qemu_log("Error: Register %s is write-only.\n", reg->name);
         return 0;
@@ -47,7 +47,7 @@ uint64_t read_register64(Register64 *reg) {
 }
 
 // Function to write to a register
-void write_register32(Register32 *reg, uint32_t value) {
+void write_register32(void *opaque, Register32 *reg, uint32_t value) {
     if ((reg->permissions == REG_READ_ONLY)) {
         qemu_log("Error: Register %s is read-only.\n", reg->name);
         return;
@@ -56,11 +56,11 @@ void write_register32(Register32 *reg, uint32_t value) {
     reg->pre_value = reg->value; // Save the previous value
     reg->value = value & reg->mask; // Mask the value to the register's mask
     if (reg->callback) {
-        reg->callback(reg, value);  // Invoke callback on write if defined
+        reg->callback(opaque, reg, value);  // Invoke callback on write if defined
     }
 }
 
-void write_register64(Register64 *reg, uint64_t value) {
+void write_register64(void *opaque, Register64 *reg, uint64_t value) {
     if ((reg->permissions == REG_READ_ONLY)) {
         qemu_log("Error: Register %s is read-only.\n", reg->name);
         return;
@@ -69,6 +69,6 @@ void write_register64(Register64 *reg, uint64_t value) {
     reg->pre_value = reg->value; // Save the previous value
     reg->value = value & reg->mask; // Mask the value to the register's mask
     if (reg->callback) {
-        reg->callback(reg, value);  // Invoke callback on write if defined
+        reg->callback(opaque, reg, value);  // Invoke callback on write if defined
     }
 }
