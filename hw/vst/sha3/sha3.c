@@ -23,22 +23,21 @@
     bit 0: reset : default 0x00
         - 0x00 : not reset
         - 0x01 : reset
-    bit 1-2: mode : default 0x00
+    bit 1: Endian : default 0x00
+        - 0x00 : little endian
+        - 0x01 : big endian
+    bit 2-3: suspend : default 0x00
+        - 0x00 : not suspend
+        - 0x01 : suspend    (When suspend is set, the SHA3 engine will stop processing and wait for the resume signal)
+        - 0x02 : resume     (When resume is set, the SHA3 engine will resume processing)
+        - 0x03 : reserved
+    bit 4-7: mode : default 0x00
         - 0x00 : sha3_224
         - 0x01 : sha3_256
         - 0x02 : sha3_384
         - 0x03 : sha3_512
         - 0x04 : shake_128
         - 0x05 : shake_256
-    bit 3: Endian : default 0x00
-        - 0x00 : little endian
-        - 0x01 : big endian
-    bit 4-5: suspend : default 0x00
-        - 0x00 : not suspend
-        - 0x01 : suspend    (When suspend is set, the SHA3 engine will stop processing and wait for the resume signal)
-        - 0x02 : resume     (When resume is set, the SHA3 engine will resume processing)
-        - 0x03 : reserved
-    bit 6-7: reserved
     bit 8: shake_output : default 0x00
         - 0x00 : reset internal state when shake output is done (maximum support to get 64 bytes output)
         - 0x01 : do not reset internal state when shake output is done
@@ -48,10 +47,10 @@
         - 0x01 : enable
 */
 #define CONTROL_RESET_BIT(val) ((val >> 0) & 0x1)
-#define CONTROL_MODE_BIT(val)  ((val >> 1) & 0x03)
-#define CONTROL_ENDIAN_BIT(val) ((val >> 3) & 0x1)
+#define CONTROL_MODE_BIT(val)  ((val >> 4) & 0x0F)
+#define CONTROL_ENDIAN_BIT(val) ((val >> 1) & 0x1)
 #define CONTROL_DMA_BIT(val)   ((val >> 31) & 0x1)
-#define CONTROL_SUSPEND_BIT(val) ((val >> 4) & 0x3)
+#define CONTROL_SUSPEND_BIT(val) ((val >> 2) & 0x3)
 #define CONTROL_SHAKE_OUTPUT_BIT(val) ((val >> 8) & 0x1)
 
 /*
@@ -120,6 +119,9 @@ void cb_outputlen_reg(void *opaque, Register32 *reg, uint32_t value);
 void get_internal_state(void);
 void assign_internal_state(uint32_t value);
 void uint32ToUint8Array(uint32_t value, uint8_t* byteArray);
+
+// Define function to set status
+
 
 enum REGISTER_NAME 
 {
