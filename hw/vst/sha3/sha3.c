@@ -67,12 +67,16 @@
     bit 3: suspend : default 0x00
         - 0x00 : not suspend
         - 0x01 : suspend
-    bit 4-31: reserved
+    bit 4: resume : default 0x00
+        - 0x00 : not resume
+        - 0x01 : resume
+    bit 5-31: reserved
 */
 #define STATUS_READY_BIT(val)       ((val >> 0) & 0x1)
 #define STATUS_DONE_BIT(val)        ((val >> 1) & 0x1)
 #define STATUS_ERROR_BIT(val)       ((val >> 2) & 0x1)
 #define STATUS_SUSPEND_BIT(val)     ((val >> 3) & 0x1) 
+#define STATUS_RESUME_BIT(val)      ((val >> 4) & 0x1)
 
 /*
 ---Define bit for SHA3_INPUTLEN_REG---
@@ -155,7 +159,7 @@ uint32_t sha3_internal_state[50];
 uint32_t state_index;
 
 // define sha3 ouput buffers
-#define MAXIMUM_OUTPUT_SIZE 64
+#define MAXIMUM_OUTPUT_SIZE 64 // 512 bits output (sha3 supports maximum 512 bits output in one time)
 uint8_t sha3_output[MAXIMUM_OUTPUT_SIZE];
 
 
@@ -324,7 +328,7 @@ void assign_internal_state(uint32_t value)
 // callback for register
 void cb_input_reg(Register32 *reg, uint32_t value) 
 {
-    // qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
+    
     // check reset bit
     if(CONTROL_RESET_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
     {
@@ -332,8 +336,8 @@ void cb_input_reg(Register32 *reg, uint32_t value)
         set_bits(&sha3_reg_list[eCONTROL_REG]->value, 0x00, 0, 0);
     }
 
-    // Check suspend bit, if suspend bit is set, the sha3 engine will stop processing and wait for the resume signal
-    if(CONTROL_SUSPEND_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x00)
+    // Check resume bit, if resume bit is set, the sha3 engine will stop processing and wait for the resume signal is clear
+    if(STATUS_RESUME_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x00)
     {
         // get input data from register
         uint32_t input_data;
@@ -386,8 +390,9 @@ void cb_input_reg(Register32 *reg, uint32_t value)
                     sha3_128_update(&_shake_128_ctx, sha3_reg_list[eINPUTLEN_REG]->value, &input_data_Array[0]);
                     if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x00)
                     {
-                        if(sha3_reg_list[eOUTPUTLEN_REG]->value >= MAXIMUM_OUTPUT_SIZE)
+                        if(sha3_reg_list[eOUTPUTLEN_REG]->value > MAXIMUM_OUTPUT_SIZE)
                         {
+                            qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
                             sha3_128_shake(&_shake_128_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // reset internal state
                         }
                         else
@@ -397,8 +402,9 @@ void cb_input_reg(Register32 *reg, uint32_t value)
                     }
                     else
                     {
-                        if(sha3_reg_list[eOUTPUTLEN_REG]->value >= MAXIMUM_OUTPUT_SIZE)
+                        if(sha3_reg_list[eOUTPUTLEN_REG]->value > MAXIMUM_OUTPUT_SIZE)
                         {
+                            qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
                             sha3_128_shake_output(&_shake_128_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
                         }
                         else
@@ -413,8 +419,9 @@ void cb_input_reg(Register32 *reg, uint32_t value)
                     sha3_256_update(&_shake_256_ctx, sha3_reg_list[eINPUTLEN_REG]->value, &input_data_Array[0]);
                     if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x00)
                     {
-                        if(sha3_reg_list[eOUTPUTLEN_REG]->value >= MAXIMUM_OUTPUT_SIZE)
+                        if(sha3_reg_list[eOUTPUTLEN_REG]->value > MAXIMUM_OUTPUT_SIZE)
                         {
+                            qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
                             sha3_256_shake(&_shake_256_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // reset internal state
                         }
                         else
@@ -424,8 +431,9 @@ void cb_input_reg(Register32 *reg, uint32_t value)
                     }
                     else
                     {
-                        if(sha3_reg_list[eOUTPUTLEN_REG]->value >= MAXIMUM_OUTPUT_SIZE)
+                        if(sha3_reg_list[eOUTPUTLEN_REG]->value > MAXIMUM_OUTPUT_SIZE)
                         {
+                            qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
                             sha3_256_shake_output(&_shake_256_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
                         }
                         else
@@ -484,8 +492,16 @@ void cb_input_reg(Register32 *reg, uint32_t value)
         if(state_index < 50)
         {
             // assign input data to internal state 50 times
+            qemu_log("[sha3]  Assign input data to internal state with value 0x%08X , %d times\n", value, state_index);
             sha3_internal_state[state_index] = value;
             state_index++;
+        }
+        
+        if(state_index == 50)
+        {
+            // clear bit resume
+            qemu_log("[sha3] resume process done\n");
+            set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x00, 4, 4);
         }
     }
     
@@ -493,7 +509,7 @@ void cb_input_reg(Register32 *reg, uint32_t value)
 
 void cb_outputctrl_reg(Register32 *reg, uint32_t value)
 {
-    // qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
+    
     uint8_t index = OUTPUTCTRL_READ_PTR_BIT(value);
     // check bit status done or suspend
     if(STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
@@ -529,29 +545,71 @@ void cb_outputctrl_reg(Register32 *reg, uint32_t value)
 
 void cb_outputlen_reg(Register32 *reg, uint32_t value)
 {
-    // qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
-    if(CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x04 || CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x05)
+    
+    switch(CONTROL_MODE_BIT(sha3_reg_list[eCONTROL_REG]->value))
     {
-        if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01 && STATUS_READY_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x00)
+        case 0x04:
         {
-            if(STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
+            if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01 && STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
             {
-                // clear output buffer
-                for(int i = 0; i < MAXIMUM_OUTPUT_SIZE; i++)
+                if(STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
                 {
-                    sha3_output[i] = 0;
+                    // clear output buffer
+                    for(int i = 0; i < MAXIMUM_OUTPUT_SIZE; i++)
+                    {
+                        sha3_output[i] = 0;
+                    }
+
+                    if(value > MAXIMUM_OUTPUT_SIZE)
+                    {
+                        qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
+                        sha3_128_shake_output(&_shake_128_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
+                    }
+                    else
+                    {
+                        qemu_log("[sha3]  shake output is %d bytes\n", value);
+                        sha3_128_shake_output(&_shake_128_ctx, value, (uint8_t *)&sha3_output); // do not reset internal state
+                    } 
+
                 }
-                sha3_256_shake_output(&_shake_256_ctx, value, (uint8_t *)&sha3_output); // do not reset internal state
             }
+            break;
         }
-        
+        case 0x05:
+        {
+            if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01 && STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
+            {
+                if(STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
+                {
+                    // clear output buffer
+                    for(int i = 0; i < MAXIMUM_OUTPUT_SIZE; i++)
+                    {
+                        sha3_output[i] = 0;
+                    }
+                    if(value > MAXIMUM_OUTPUT_SIZE)
+                    {
+                        qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
+                        sha3_256_shake_output(&_shake_256_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
+                    }
+                    else
+                    {
+                        qemu_log("[sha3]  shake output is %d bytes\n", value);
+                        sha3_256_shake_output(&_shake_256_ctx, value, (uint8_t *)&sha3_output); // do not reset internal state
+                    }
+                    
+                }
+            }
+            break;
+        }
+        default:
+            break;
     }
     
 }
 
 void cb_control_reg(Register32 *reg, uint32_t value)
 {
-    // qemu_log("[sha3] Callback for register %s invoked with value 0x%08X\n", reg->name, value);
+    // check reset bit
     if(CONTROL_RESET_BIT(value) == 0x01)
     {
         // reset all sha3 cxt
@@ -576,6 +634,7 @@ void cb_control_reg(Register32 *reg, uint32_t value)
         qemu_log("[sha3] Reset sha3\n");
     }
 
+    // check suspend bit
     if(CONTROL_SUSPEND_BIT(value) == 0x01)  // suspend
     {
         // get internal state
@@ -584,16 +643,57 @@ void cb_control_reg(Register32 *reg, uint32_t value)
         set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x01, 3, 3);
         // clear status ready
         set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x00, 0, 0);
+        // clear status resume
+        set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x00, 4, 4);
         // reset state index
         state_index = 0;
-        qemu_log("[sha3] suspend sha3\n");
+        qemu_log("[sha3] suspend sha3, getting internal state from output register\n");
     }
     else if(CONTROL_SUSPEND_BIT(value) == 0x02) //resume
     {
         // clear status suspend
         set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x00, 3, 3);
+        // set status resume
+        set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x01, 4, 4);
         assign_internal_state(value);
-        qemu_log("[sha3] resume sha3\n");
+        qemu_log("[sha3] resume sha3, configuration for internal state by writing into input register 50 times\n");
+    }
+
+    // check mode
+    switch(CONTROL_MODE_BIT(value))
+    {
+        case 0x00:
+        {
+            qemu_log("[sha3] sha3_224 mode\n");
+            break;
+        }
+        case 0x01:
+        {
+            qemu_log("[sha3] sha3_256 mode\n");
+            break;
+        }
+        case 0x02:
+        {
+            qemu_log("[sha3] sha3_384 mode\n");
+            break;
+        }
+        case 0x03:
+        {
+            qemu_log("[sha3] sha3_512 mode\n");
+            break;
+        }
+        case 0x04:
+        {
+            qemu_log("[sha3] shake_128 mode\n");
+            break;
+        }
+        case 0x05:
+        {
+            qemu_log("[sha3] shake_256 mode\n");
+            break;
+        }
+        default:
+            break;
     }
     
 }
