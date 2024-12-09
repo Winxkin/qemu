@@ -558,26 +558,21 @@ void cb_outputlen_reg(void *opaque, Register32 *reg, uint32_t value)
         {
             if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01 && STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
             {
-                if(STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
+                // clear output buffer
+                for(int i = 0; i < MAXIMUM_OUTPUT_SIZE; i++)
                 {
-                    // clear output buffer
-                    for(int i = 0; i < MAXIMUM_OUTPUT_SIZE; i++)
-                    {
-                        sha3_output[i] = 0;
-                    }
-
-                    if(value > MAXIMUM_OUTPUT_SIZE)
-                    {
-                        qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
-                        sha3_128_shake_output(&_shake_128_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
-                    }
-                    else
-                    {
-                        qemu_log("[sha3]  shake output is %d bytes\n", value);
-                        sha3_128_shake_output(&_shake_128_ctx, value, (uint8_t *)&sha3_output); // do not reset internal state
-                    } 
-
+                    sha3_output[i] = 0;
                 }
+                if(value > MAXIMUM_OUTPUT_SIZE)
+                {
+                    qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
+                    sha3_128_shake_output(&_shake_128_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
+                }
+                else
+                {
+                    qemu_log("[sha3]  shake output is %d bytes\n", value);
+                    sha3_128_shake_output(&_shake_128_ctx, value, (uint8_t *)&sha3_output); // do not reset internal state
+                }  
             }
             break;
         }
@@ -585,24 +580,20 @@ void cb_outputlen_reg(void *opaque, Register32 *reg, uint32_t value)
         {
             if(CONTROL_SHAKE_OUTPUT_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01 && STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
             {
-                if(STATUS_DONE_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x01)
+                // clear output buffer
+                for(int i = 0; i < MAXIMUM_OUTPUT_SIZE; i++)
                 {
-                    // clear output buffer
-                    for(int i = 0; i < MAXIMUM_OUTPUT_SIZE; i++)
-                    {
-                        sha3_output[i] = 0;
-                    }
-                    if(value > MAXIMUM_OUTPUT_SIZE)
-                    {
-                        qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
-                        sha3_256_shake_output(&_shake_256_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
-                    }
-                    else
-                    {
-                        qemu_log("[sha3]  shake output is %d bytes\n", value);
-                        sha3_256_shake_output(&_shake_256_ctx, value, (uint8_t *)&sha3_output); // do not reset internal state
-                    }
-                    
+                    sha3_output[i] = 0;
+                }
+                if(value > MAXIMUM_OUTPUT_SIZE)
+                {
+                    qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
+                    sha3_256_shake_output(&_shake_256_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
+                }
+                else
+                {
+                    qemu_log("[sha3]  shake output is %d bytes\n", value);
+                    sha3_256_shake_output(&_shake_256_ctx, value, (uint8_t *)&sha3_output); // do not reset internal state
                 }
             }
             break;
