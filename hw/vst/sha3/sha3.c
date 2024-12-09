@@ -397,10 +397,12 @@ void cb_input_reg(void *opaque, Register32 *reg, uint32_t value)
                         if(sha3_reg_list[eOUTPUTLEN_REG]->value > MAXIMUM_OUTPUT_SIZE)
                         {
                             qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
+                            qemu_log("[sha3]  shake output is %d bytes\n", MAXIMUM_OUTPUT_SIZE);
                             sha3_128_shake(&_shake_128_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // reset internal state
                         }
                         else
                         {
+                            qemu_log("[sha3]  shake output is %d bytes\n", sha3_reg_list[eOUTPUTLEN_REG]->value);
                             sha3_128_shake(&_shake_128_ctx, sha3_reg_list[eOUTPUTLEN_REG]->value, (uint8_t *)&sha3_output); // reset internal state
                         }   
                     }
@@ -409,10 +411,12 @@ void cb_input_reg(void *opaque, Register32 *reg, uint32_t value)
                         if(sha3_reg_list[eOUTPUTLEN_REG]->value > MAXIMUM_OUTPUT_SIZE)
                         {
                             qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
+                            qemu_log("[sha3]  shake output is %d bytes\n", MAXIMUM_OUTPUT_SIZE);
                             sha3_128_shake_output(&_shake_128_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
                         }
                         else
                         {
+                            qemu_log("[sha3]  shake output is %d bytes\n", sha3_reg_list[eOUTPUTLEN_REG]->value);
                             sha3_128_shake_output(&_shake_128_ctx, sha3_reg_list[eOUTPUTLEN_REG]->value, (uint8_t *)&sha3_output); // do not reset internal state
                         }  
                     }
@@ -426,10 +430,12 @@ void cb_input_reg(void *opaque, Register32 *reg, uint32_t value)
                         if(sha3_reg_list[eOUTPUTLEN_REG]->value > MAXIMUM_OUTPUT_SIZE)
                         {
                             qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
+                            qemu_log("[sha3]  shake output is %d bytes\n", MAXIMUM_OUTPUT_SIZE);
                             sha3_256_shake(&_shake_256_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // reset internal state
                         }
                         else
                         {
+                            qemu_log("[sha3]  shake output is %d bytes\n", sha3_reg_list[eOUTPUTLEN_REG]->value);
                             sha3_256_shake(&_shake_256_ctx, sha3_reg_list[eOUTPUTLEN_REG]->value, (uint8_t *)&sha3_output); // reset internal state
                         }   
                     }
@@ -438,10 +444,12 @@ void cb_input_reg(void *opaque, Register32 *reg, uint32_t value)
                         if(sha3_reg_list[eOUTPUTLEN_REG]->value > MAXIMUM_OUTPUT_SIZE)
                         {
                             qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
+                            qemu_log("[sha3]  shake output is %d bytes\n", MAXIMUM_OUTPUT_SIZE);
                             sha3_256_shake_output(&_shake_256_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
                         }
                         else
                         {
+                            qemu_log("[sha3]  shake output is %d bytes\n", sha3_reg_list[eOUTPUTLEN_REG]->value);
                             sha3_256_shake_output(&_shake_256_ctx, sha3_reg_list[eOUTPUTLEN_REG]->value, (uint8_t *)&sha3_output); // do not reset internal state
                         }
                     }
@@ -566,6 +574,7 @@ void cb_outputlen_reg(void *opaque, Register32 *reg, uint32_t value)
                 if(value > MAXIMUM_OUTPUT_SIZE)
                 {
                     qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
+                    qemu_log("[sha3]  shake output is %d bytes\n", MAXIMUM_OUTPUT_SIZE);
                     sha3_128_shake_output(&_shake_128_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
                 }
                 else
@@ -588,6 +597,7 @@ void cb_outputlen_reg(void *opaque, Register32 *reg, uint32_t value)
                 if(value > MAXIMUM_OUTPUT_SIZE)
                 {
                     qemu_log("[sha3]  shake output is higher than 64 bytes, sha3 default for %d bytes output\n", MAXIMUM_OUTPUT_SIZE);
+                    qemu_log("[sha3]  shake output is %d bytes\n", MAXIMUM_OUTPUT_SIZE);
                     sha3_256_shake_output(&_shake_256_ctx, MAXIMUM_OUTPUT_SIZE, (uint8_t *)&sha3_output); // do not reset internal state
                 }
                 else
