@@ -340,22 +340,22 @@ void cb_input_reg(void *opaque, Register32 *reg, uint32_t value)
         set_bits(&sha3_reg_list[eCONTROL_REG]->value, 0x00, 0, 0);
     }
 
+    // get input data from register
+    uint32_t input_data;
+    uint8_t  input_data_Array[4];
+    // get input data from register 32 bits (4 bytes)
+    if(CONTROL_ENDIAN_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
+    {
+        input_data = little_to_big_endian(value);
+    }
+    else
+    {
+        input_data = value;
+    }
+
     // Check resume bit, if resume bit is set, the sha3 engine will stop processing and wait for the resume signal is clear
     if(STATUS_RESUME_BIT(sha3_reg_list[eSTATUS_REG]->value) == 0x00)
     {
-        // get input data from register
-        uint32_t input_data;
-        uint8_t  input_data_Array[4];
-        // get input data from register 32 bits (4 bytes)
-        if(CONTROL_ENDIAN_BIT(sha3_reg_list[eCONTROL_REG]->value) == 0x01)
-        {
-            input_data = little_to_big_endian(value);
-        }
-        else
-        {
-            input_data = value;
-        }
-
         uint32ToUint8Array(input_data, input_data_Array);
         
         set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x01, 0, 0); // set status ready
@@ -400,7 +400,11 @@ void cb_input_reg(void *opaque, Register32 *reg, uint32_t value)
                     break;
                 }
                 default:
+                {
+                    qemu_log("[sha3] Error: mode is not supported\n");
+                    return;
                     break;
+                }
             }
             // set status done
             set_bits(&sha3_reg_list[eSTATUS_REG]->value, 0x01, 1, 1);
@@ -433,7 +437,11 @@ void cb_input_reg(void *opaque, Register32 *reg, uint32_t value)
                     sha3_256_update(&_shake_256_ctx, 0x04, &input_data_Array[0]);
                     break;
                 default:
+                {    
+                    qemu_log("[sha3] Error: mode is not supported\n");
+                    return;
                     break;
+                }
             }
             // update input length register
             sha3_reg_list[eINPUTLEN_REG]->value = sha3_reg_list[eINPUTLEN_REG]->value - 0x04; // decrease input length by 4 byte
@@ -450,8 +458,8 @@ void cb_input_reg(void *opaque, Register32 *reg, uint32_t value)
         if(state_index < 50)
         {
             // assign input data to internal state 50 times
-            qemu_log("[sha3]  Assign input data to internal state with value 0x%08X , %d times\n", value, state_index);
-            sha3_internal_state[state_index] = value;
+            qemu_log("[sha3]  Assign input data to internal state with value 0x%08X , %d times\n", input_data, state_index);
+            sha3_internal_state[state_index] = input_data;
             state_index++;
         }
         
