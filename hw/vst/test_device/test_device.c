@@ -6,6 +6,8 @@
 #include "hw/qdev-properties.h"
 #include "qemu/log.h"
 #include "hw/vst/reg_interface.h"
+#include "hw/qdev-core.h"
+#include "hw/irq.h"
 
 #define REG_01 0x00
 #define REG_02 0x04
@@ -18,6 +20,19 @@ void cb_reg_01(void *opaque, Register32 *reg, uint32_t value);
 void cb_reg_02(void *opaque, Register32 *reg, uint32_t value);
 void cb_reg_03(void *opaque, Register32 *reg, uint32_t value);
 void cb_reg_04(void *opaque, Register32 *reg, uint32_t value);
+
+void signal_in_handler(void *opaque, int n, int level);
+void gpio_in_handler(void *opaque, int n, int level);
+
+void signal_in_handler(void *opaque, int n, int level)
+{
+    qemu_log("[test-device] signal_in_handler invoked with value %d, num of gpio %d\n", level, n);
+}
+
+void gpio_in_handler(void *opaque, int n, int level)
+{
+    qemu_log("[test-device] gpio_in_handler invoked with value %d, num of gpio %d\n", level, n);
+}
 
 void cb_reg_01(void *opaque, Register32 *reg, uint32_t value) {
     qemu_log("[test-device] Callback for register %s invoked with value 0x%X\n", reg->name, value);
@@ -95,7 +110,7 @@ static void test_device_realize(DeviceState *dev, Error **errp)
     Testdevice *tsd = TEST_DEVICE(dev);
 
     memory_region_init_io(&tsd->io, OBJECT(dev), 
-                &test_device_ops, tsd,"test-device", 0x1000);
+                &test_device_ops, tsd,"test-device", 0x100);
 
     sysbus_init_mmio(SYS_BUS_DEVICE(tsd), &tsd->io);
     sysbus_init_irq(SYS_BUS_DEVICE(tsd), &tsd->irq);
@@ -114,6 +129,11 @@ Testdevice *test_device_init(MemoryRegion *address_space,
 
     mr = sysbus_mmio_get_region(SYS_BUS_DEVICE(tsd), 0);
     memory_region_add_subregion(address_space, base, mr);
+
+    /*initialize gpio*/
+    // qdev_init_gpio_in_named(DEVICE(tsd), gpio_in_handler, "gpio-in", 32);
+    // qdev_init_gpio_in_named(DEVICE(tsd), signal_in_handler, "signal-in", 1);
+
 
     /*initialize register*/
     test_device_register_init();

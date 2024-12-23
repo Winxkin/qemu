@@ -87,6 +87,7 @@ enum {
     VIRT_PCIE_ECAM,
     /*Define your custom device in here*/
     VIRT_TEST_DEVICE,
+    VIRT_TEST_GPIO,
     VIRT_SHA3
 };
 
@@ -100,7 +101,8 @@ enum {
     /*Define your custom device irq in here*/
     SHA3_IRQ_DONE = 96,
     SHA3_IRQ_ERR = 97,
-    TEST_DEVICE_IRQ = 199,
+    TEST_DEVICE_IRQ = 198,
+    TEST_GPIO_IRQ = 199,
 };
 
 #define VIRT_PLATFORM_BUS_NUM_IRQS 32
