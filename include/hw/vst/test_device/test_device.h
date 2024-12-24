@@ -5,6 +5,7 @@
 #include "hw/sysbus.h"
 #include "qom/object.h"
 #include "hw/vst/reg_interface.h"
+#include "hw/vst/vst_gpio.h"
 
 #define TYPE_TEST_DEVICE "test-device"
 OBJECT_DECLARE_SIMPLE_TYPE(Testdevice, TEST_DEVICE)

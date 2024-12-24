@@ -14,6 +14,9 @@
 #define MAX_REG 2
 Register32 *tsg_reg_list[MAX_REG];
 
+void test_gpio_register_init(void);
+void test_gpio_gpio_init(Testgpio *tsd);
+
 void cb_reg_signal(void *opaque, Register32 *reg, uint32_t value);
 void cb_reg_gpio(void *opaque, Register32 *reg, uint32_t value);
 
@@ -35,6 +38,11 @@ void test_gpio_register_init(void)
 {
     tsg_reg_list[0] = create_register32("REG_SIGNAL", REG_SIGNAL, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_signal);
     tsg_reg_list[1] = create_register32("REG_GPIO", REG_GPIO, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_gpio);
+}
+
+void test_gpio_gpio_init(Testgpio *tsd)
+{
+    
 }
 
 /*This is template code for registration new device in qemu*/

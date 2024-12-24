@@ -21,13 +21,14 @@ vst_gpio_binding_node_t *vst_gpio_bindings_head = NULL;
 
 
 
-void vst_port_init(vst_gpio_port *port, const char *name, uint32_t num_pins, vst_gpio_mode mode)
+void vst_port_init(vst_gpio_port *port, const char *name, uint32_t num_pins, vst_gpio_mode mode, vst_port_callback_t callback, void *context)
 {
     port->name = name;
 
     if(num_pins > 32)
     {
         port->num_pins = 32;
+        qemu_log("Warning: PORT '%s' has more than 32 pins, only the first 32 pins will be used\n", port->name);
     }
     else
     {
@@ -36,9 +37,20 @@ void vst_port_init(vst_gpio_port *port, const char *name, uint32_t num_pins, vst
     port->value = 0x00;
     port->mode = mode;
     port->mask = PIN_MASK(num_pins);
+
+    if(mode == GPIO_MODE_INPUT)
+    {
+        port->callback = callback;
+        port->callback_context = context;
+    }
+    else
+    {
+        port->callback = NULL;
+        port->callback_context = NULL;
+    }
 }
 
-void vst_port_write(vst_gpio_port *port,const char *name, uint32_t value)
+void vst_port_write(vst_gpio_port *port, uint32_t value)
 {
     if(port->mode == GPIO_MODE_OUTPUT)
     {
@@ -47,17 +59,25 @@ void vst_port_write(vst_gpio_port *port,const char *name, uint32_t value)
         vst_port_binding_node_t *current = vst_port_bindings_head;
         while (current->next != NULL) 
         {
-            if (current->binding.output_port == port && strcmp(current->binding.output_name, name) == 0) 
+            if (current->binding.output_port == port && strcmp(current->binding.output_port->name, port->name) == 0) 
             {
-                vst_port_update_input(current->binding.input_port, current->binding.input_name, value);
+                if(current->binding.input_port->callback)
+                {
+                    current->binding.input_port->value = port->value;
+                    current->binding.input_port->callback(port->value, current->binding.input_port->callback_context);
+                }
             }
             current = current->next; // Traverse to the end of the list
         }
 
         // the lastest node
-        if(current->binding.output_port == port && strcmp(current->binding.output_name, name) == 0) 
+        if (current->binding.output_port == port && strcmp(current->binding.output_port->name, port->name) == 0) 
         {
-            vst_port_update_input(current->binding.input_port, current->binding.input_name, value);
+            if(current->binding.input_port->callback)
+            {
+                current->binding.input_port->value = port->value;
+                current->binding.input_port->callback(port->value, current->binding.input_port->callback_context);
+            }
         }
     }
     else
@@ -66,13 +86,36 @@ void vst_port_write(vst_gpio_port *port,const char *name, uint32_t value)
     }
 }
 
-uint32_t vst_port_read(vst_gpio_port *port, const char *name)
+uint32_t vst_port_read(vst_gpio_port *port)
 {
     return port->value;
 }
 
-int vst_port_bind(vst_gpio_port *output_port, const char *output_name, vst_gpio_port *input_port, const char *input_name)
+int vst_port_bind(vst_gpio_port *output_port, vst_gpio_port *input_port)
 {
+
+    if(output_port->num_pins != input_port->num_pins)
+    {
+        qemu_log("Error: PORTs '%s' and '%s' have different number of pins\n", output_port->name, input_port->name);
+        return -1;
+    }
+
+    if(output_port->mode == input_port->mode)
+    {
+        qemu_log("Error: PORTs '%s' and '%s' have the same mode\n", output_port->name, input_port->name);
+        return -1;
+    }
+    // Check input port is bound to another output port
+    vst_port_binding_node_t *current = vst_port_bindings_head;
+    while (current != NULL) 
+    {
+        if (current->binding.input_port == input_port) 
+        {
+            qemu_log("Error: PORT '%s' is already bound to '%s'\n", input_port->name, current->binding.output_port->name);
+            return -1;
+        }
+        current = current->next;
+    }
 
     vst_port_binding_node_t *new_node = (vst_port_binding_node_t *)malloc(sizeof(vst_port_binding_node_t));
 
@@ -80,11 +123,10 @@ int vst_port_bind(vst_gpio_port *output_port, const char *output_name, vst_gpio_
         qemu_log("Failed to allocate memory for a new PORT binding\n");
         return -1; // Memory allocation failed
     }
+
     // Populate the binding data
     new_node->binding.output_port = output_port;
-    new_node->binding.output_name = output_name; // Duplicate string
     new_node->binding.input_port = input_port;
-    new_node->binding.input_name = input_name; // Duplicate string
     new_node->next = NULL;
 
     // Add the new node to the end of the list
@@ -94,7 +136,7 @@ int vst_port_bind(vst_gpio_port *output_port, const char *output_name, vst_gpio_
     } 
     else 
     {
-        vst_port_binding_node_t *current = vst_port_bindings_head;
+        current = vst_port_bindings_head;
         while (current->next != NULL) 
         {
             current = current->next; // Traverse to the end of the list
@@ -104,160 +146,103 @@ int vst_port_bind(vst_gpio_port *output_port, const char *output_name, vst_gpio_
     return 0; // Success
 }
 
-void vst_port_update_input(vst_gpio_port *port, const char *name, uint32_t value)
-{
-    if(port->callback)
-    {
-        port->value = value & port->mask;
-        port->callback(port->value, port->callback_context);
-    }
-}
-
-
 
 // Initialize a GPIO group with a set of pins
-void vst_gpio_grp_init(vst_gpio_grp *group, const char *grp_name, uint32_t num_pins) 
+void vst_gpio_init(vst_gpio_pin *pin, const char *pin_name, vst_gpio_mode pin_mode, vst_gpio_callback_t callback, void *context) 
 {
-    group->grp_name = grp_name;
-    group->num_pins = num_pins;
-    group->pins = (vst_gpio_pin *)malloc(sizeof(vst_gpio_pin) * num_pins);
-
-    for (uint32_t i = 0; i < num_pins; i++) {
-        group->pins[i].pin = i;
-        group->pins[i].mode = GPIO_MODE_INPUT;
-        group->pins[i].state = GPIO_LOW;
-        group->pins[i].name = NULL;
-        group->pins[i].callback = NULL;
-        group->pins[i].callback_context = NULL;
-    }
-}
-
-// Get GPIO pin index by its name
-int vst_gpio_get_pin_index(vst_gpio_grp *group, const char *name) 
-{
-    for (uint32_t i = 0; i < group->num_pins; i++) {
-        if (strcmp(group->pins[i].name, name) == 0) 
-        {
-            return i;
-        }
-    }
-    return -1; // Pin not found
-}
-
-// Set GPIO pin mode (input/output)
-void vst_gpio_set_mode(vst_gpio_grp *group, const char *name, vst_gpio_mode mode) 
-{
-    int pin_index = vst_gpio_get_pin_index(group, name);
-    if (pin_index >= 0) 
+    pin->name = pin_name;
+    pin->mode = pin_mode;
+    pin->state = GPIO_LOW;
+    if (pin_mode == GPIO_MODE_INPUT) 
     {
-        group->pins[pin_index].mode = mode;
-    } 
-    else 
+        pin->callback = callback;
+        pin->callback_context = context;
+    }
+    else    
     {
-        qemu_log("GPIO pin '%s' not found\n", name);
+        pin->callback = NULL;
+        pin->callback_context = NULL;
     }
 }
 
 // Write a state (HIGH or LOW) to a GPIO pin
-void vst_gpio_write(vst_gpio_grp *group, const char *name, vst_gpio_state state) 
+void vst_gpio_write(vst_gpio_pin *pin, vst_gpio_state state) 
 {
-    int pin_index = vst_gpio_get_pin_index(group, name);
 
-    if (pin_index >= 0 && group->pins[pin_index].mode == GPIO_MODE_OUTPUT) 
+    if (pin->mode == GPIO_MODE_OUTPUT) 
     {
-        group->pins[pin_index].state = state;
-        qemu_log("GPIO '%s' set to %s\n", name, state == GPIO_HIGH ? "HIGH" : "LOW");
-
+        pin->state = state;
         // Update all bound input GPIOs if an output changes state
         vst_gpio_binding_node_t *current = vst_gpio_bindings_head;
+
         while (current->next != NULL) 
         {
-            if (current->binding.output_group == group && strcmp(current->binding.output_name, name) == 0) 
+            if (current->binding.output_pin == pin && strcmp(current->binding.output_pin->name, pin->name) == 0) 
             {
-                vst_gpio_update_input(current->binding.input_group, current->binding.input_name, state);
+                if(current->binding.input_pin->callback)
+                {
+                    current->binding.input_pin->state = pin->state;
+                    current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                }
             }
             current = current->next; // Traverse to the end of the list
         }
         // the lastest node
-        if (current->binding.output_group == group && strcmp(current->binding.output_name, name) == 0) 
+        if (current->binding.output_pin == pin && strcmp(current->binding.output_pin->name, pin->name) == 0) 
         {
-            vst_gpio_update_input(current->binding.input_group, current->binding.input_name, state);
+            if(current->binding.input_pin->callback)
+            {
+                current->binding.input_pin->state = pin->state;
+                current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+            }
         }
     } 
     else 
     {
-        qemu_log("GPIO pin '%s' is not an output pin\n", name);
+        qemu_log("GPIO pin '%s' is not an output pin\n", pin->name);
     }
 }
 
 // Read the state of a GPIO pin (HIGH/LOW)
-vst_gpio_state vst_gpio_read(vst_gpio_grp *group, const char *name) 
+vst_gpio_state vst_gpio_read(vst_gpio_pin *pin) 
 {
-    int pin_index = vst_gpio_get_pin_index(group, name);
-
-    if (pin_index >= 0 && group->pins[pin_index].mode == GPIO_MODE_INPUT) 
-    {
-        return group->pins[pin_index].state;
-    }
-    qemu_log("GPIO pin '%s' is not an input pin\n", name);
-    return GPIO_LOW;
+    return pin->state;
 }
 
-// Set the callback function for an input GPIO pin
-void vst_gpio_set_callback(vst_gpio_grp *group, const char *name, vst_gpio_callback_t callback, void *context) 
-{
-    int pin_index = vst_gpio_get_pin_index(group, name);
-
-    if (pin_index >= 0 && group->pins[pin_index].mode == GPIO_MODE_INPUT) 
-    {
-        group->pins[pin_index].callback = callback;
-        group->pins[pin_index].callback_context = context;
-    } else {
-        qemu_log("GPIO pin '%s' is not an input pin\n", name);
-    }
-}
-
-void vst_port_set_callback(vst_gpio_port *port, const char *name, vst_port_callback_t callback, void *context)
-{
-    if(port->mode == GPIO_MODE_INPUT)
-    {
-        port->callback = callback;
-        port->callback_context = context;
-    }
-    else 
-    {
-        qemu_log("Port '%s' is not an input \n", name);
-    }
-}
-
-// Update the state of an input GPIO when its bound output GPIO is triggered
-void vst_gpio_update_input(vst_gpio_grp *group, const char *name, vst_gpio_state state) 
-{
-    int pin_index = vst_gpio_get_pin_index(group, name);
-
-    if (pin_index >= 0 && group->pins[pin_index].callback) 
-    {
-        group->pins[pin_index].state = state;
-        group->pins[pin_index].callback(state, group->pins[pin_index].callback_context);
-    }
-}
 
 // Bind an output GPIO from one group to an input GPIO of another group
-int vst_gpio_bind(vst_gpio_grp *output_group, const char *output_name, vst_gpio_grp *input_group, const char *input_name) 
+int vst_gpio_bind(vst_gpio_pin *output_pin, vst_gpio_pin *input_pin) 
 {
     
+    if(output_pin->mode == input_pin->mode)
+    {
+        qemu_log("Error: pin '%s' and '%s' have the same mode\n", output_pin->name, input_pin->name);
+        return -1;
+    }
+
+    // Check input pin is bound to another output pin
+    vst_gpio_binding_node_t *current = vst_gpio_bindings_head;
+    while (current != NULL) 
+    {
+        if (current->binding.input_pin == input_pin) 
+        {
+            qemu_log("Error: pin '%s' is already bound to '%s'\n", input_pin->name, current->binding.output_pin->name);
+            return -1;
+        }
+        current = current->next;
+    }
+
     vst_gpio_binding_node_t *new_node = (vst_gpio_binding_node_t *)malloc(sizeof(vst_gpio_binding_node_t));
 
     if (new_node == NULL) 
     {
-        qemu_log("Failed to allocate memory for a new PORT binding\n");
+        qemu_log("Failed to allocate memory for a new pin binding\n");
         return -1; // Memory allocation failed
     }
+
     // Populate the binding data
-    new_node->binding.output_group = output_group;
-    new_node->binding.output_name = output_name; // Duplicate string
-    new_node->binding.input_group = input_group;
-    new_node->binding.input_name = input_name; // Duplicate string
+    new_node->binding.output_pin = output_pin;
+    new_node->binding.input_pin = input_pin;
     new_node->next = NULL;
 
     // Add the new node to the end of the list
@@ -267,7 +252,7 @@ int vst_gpio_bind(vst_gpio_grp *output_group, const char *output_name, vst_gpio_
     } 
     else 
     {
-        vst_gpio_binding_node_t *current = vst_gpio_bindings_head;
+        current = vst_gpio_bindings_head;
         while (current->next != NULL) 
         {
             current = current->next; // Traverse to the end of the list
@@ -286,11 +271,6 @@ void vst_free_bindings(void)
     {
         vst_port_binding_node_t *ptemp = pcurrent;
         pcurrent = pcurrent->next;
-        
-        // Free dynamically allocated strings
-        free((char *)ptemp->binding.output_name);
-        free((char *)ptemp->binding.input_name);
-
         // Free the node itself
         free(ptemp);
     }
@@ -300,16 +280,10 @@ void vst_free_bindings(void)
     {
         vst_gpio_binding_node_t *gtemp = gcurrent;
         gcurrent = gcurrent->next;
-        
-        // Free dynamically allocated strings
-        free((char *)gtemp->binding.output_name);
-        free((char *)gtemp->binding.input_name);
-
         // Free the node itself
         free(gtemp);
     }
 
     vst_port_bindings_head = NULL;
     vst_gpio_bindings_head = NULL;
-    qemu_log("All GPIO bindings are freed.\n");
 }
