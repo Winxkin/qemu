@@ -15,6 +15,10 @@ struct Testdevice {
     uint32_t reg_value;
     qemu_irq irq;  // IRQ line
     MemoryRegion io;
+    // input gpio
+    vst_gpio_pin  I_pin1;  // input gpio
+    vst_gpio_port I_port1; // input gpio
+    vst_gpio_port I_port2; // input gpio
 };
 
 

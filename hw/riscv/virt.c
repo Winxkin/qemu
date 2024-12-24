@@ -1703,18 +1703,18 @@ static void virt_machine_init(MachineState *machine)
         qdev_get_gpio_in(mmio_irqchip, RTC_IRQ));
 
     /*init your custom device in here*/
-    test_gpio_init(system_memory, memmap[VIRT_TEST_GPIO].base,
-        qdev_get_gpio_in(mmio_irqchip, TEST_GPIO_IRQ));
+    Testgpio *tsg = test_gpio_init(system_memory, memmap[VIRT_TEST_GPIO].base, qdev_get_gpio_in(mmio_irqchip, TEST_GPIO_IRQ));
         
-    test_device_init(system_memory, memmap[VIRT_TEST_DEVICE].base,
-        qdev_get_gpio_in(mmio_irqchip, TEST_DEVICE_IRQ));
+    Testdevice *tsd = test_device_init(system_memory, memmap[VIRT_TEST_DEVICE].base, qdev_get_gpio_in(mmio_irqchip, TEST_DEVICE_IRQ));
 
     sha3_init(system_memory, memmap[VIRT_SHA3].base,
         qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ_DONE), 
         qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ_DONE));
 
     /*Binding Internal ports of Virt machine in here*/
-
+    vst_port_bind(&tsg->O_port1, &tsd->I_port1);
+    vst_port_bind(&tsg->O_port2, &tsd->I_port2);
+    vst_gpio_bind(&tsg->O_pin1,  &tsd->I_pin1);
 
     /*-----------------------------------*/
 

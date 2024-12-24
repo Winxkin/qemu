@@ -9,40 +9,56 @@
 #include "hw/qdev-core.h"
 #include "hw/irq.h"
 
-#define REG_SIGNAL  0x00
-#define REG_GPIO    0x04
-#define MAX_REG 2
+#define REG_PIN1    0x00
+#define REG_PORT1   0x04
+#define REG_PORT2   0x08
+#define MAX_REG 3
 Register32 *tsg_reg_list[MAX_REG];
 
 void test_gpio_register_init(void);
 void test_gpio_gpio_init(Testgpio *tsd);
 
-void cb_reg_signal(void *opaque, Register32 *reg, uint32_t value);
-void cb_reg_gpio(void *opaque, Register32 *reg, uint32_t value);
+void cb_reg_pin1(void *opaque, Register32 *reg, uint32_t value);
+void cb_reg_port1(void *opaque, Register32 *reg, uint32_t value);
+void cb_reg_port2(void *opaque, Register32 *reg, uint32_t value);
 
-void cb_reg_signal(void *opaque, Register32 *reg, uint32_t value) {
+void cb_reg_pin1(void *opaque, Register32 *reg, uint32_t value) {
     qemu_log("[test-gpio] Callback for register %s invoked with value 0x%X\n", reg->name, value);
-    // Testgpio *tsg = TEST_GPIO(opaque);
-
+    Testgpio *tsg = TEST_GPIO(opaque);
+    if(value == 0)
+    {
+        vst_gpio_write(&tsg->O_pin1, GPIO_LOW);
+    }
+    else
+    {
+        vst_gpio_write(&tsg->O_pin1, GPIO_HIGH);
+    }
 }
 
-void cb_reg_gpio(void *opaque, Register32 *reg, uint32_t value) {
+void cb_reg_port1(void *opaque, Register32 *reg, uint32_t value) {
     qemu_log("[test-gpio] Callback for register %s invoked with value 0x%X\n", reg->name, value);
-    // Testgpio *tsg = TEST_GPIO(opaque);
-
-    
+    Testgpio *tsg = TEST_GPIO(opaque);
+    vst_port_write(&tsg->O_port1, value);
 }
 
+void cb_reg_port2(void *opaque, Register32 *reg, uint32_t value) {
+    qemu_log("[test-gpio] Callback for register %s invoked with value 0x%X\n", reg->name, value);
+    Testgpio *tsg = TEST_GPIO(opaque);
+    vst_port_write(&tsg->O_port2, value);
+}
 
 void test_gpio_register_init(void)
 {
-    tsg_reg_list[0] = create_register32("REG_SIGNAL", REG_SIGNAL, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_signal);
-    tsg_reg_list[1] = create_register32("REG_GPIO", REG_GPIO, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_gpio);
+    tsg_reg_list[0] = create_register32("REG_PIN1", REG_PIN1, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_pin1);
+    tsg_reg_list[1] = create_register32("REG_PORT1", REG_PORT1, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_port1);
+    tsg_reg_list[2] = create_register32("REG_PORT2", REG_PORT2, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_port2);
 }
 
 void test_gpio_gpio_init(Testgpio *tsd)
 {
-    
+    vst_port_init(&tsd->O_port1, "O_PORT1", 32, GPIO_MODE_OUTPUT, NULL, NULL);
+    vst_port_init(&tsd->O_port2, "O_PORT2", 16, GPIO_MODE_OUTPUT, NULL, NULL);
+    vst_gpio_init(&tsd->O_pin1, "O_PIN1", GPIO_MODE_OUTPUT, NULL, NULL);
 }
 
 /*This is template code for registration new device in qemu*/
@@ -118,8 +134,7 @@ Testgpio *test_gpio_init(MemoryRegion *address_space,
     memory_region_add_subregion(address_space, base, mr);
 
     /*initialize gpio*/
-
-
+    test_gpio_gpio_init(tsg);
 
     /*initialize register*/
     test_gpio_register_init();

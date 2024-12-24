@@ -24,6 +24,25 @@ void cb_reg_02(void *opaque, Register32 *reg, uint32_t value);
 void cb_reg_03(void *opaque, Register32 *reg, uint32_t value);
 void cb_reg_04(void *opaque, Register32 *reg, uint32_t value);
 
+void cb_pin1(vst_gpio_state state, void *context);
+void cb_port1(uint32_t value, void *context);
+void cb_port2(uint32_t value, void *context);
+
+
+void cb_pin1(vst_gpio_state state, void *context)
+{
+    qemu_log("[test-device] Callback for pin %s invoked with state %d\n", ((Testdevice *)context)->I_pin1.name, state);
+}
+
+void cb_port1(uint32_t value, void *context)
+{
+    qemu_log("[test-device] Callback for port %s invoked with value 0x%X\n", ((Testdevice *)context)->I_port1.name, value);
+}
+
+void cb_port2(uint32_t value, void *context)
+{
+    qemu_log("[test-device] Callback for port %s invoked with value 0x%X\n", ((Testdevice *)context)->I_port2.name, value);
+}
 
 void cb_reg_01(void *opaque, Register32 *reg, uint32_t value) {
     qemu_log("[test-device] Callback for register %s invoked with value 0x%X\n", reg->name, value);
@@ -51,7 +70,9 @@ void test_device_register_init(void)
 
 void test_device_gpio_init(Testdevice *tsd)
 {
-   
+    vst_port_init(&tsd->I_port1, "I_PORT1", 32, GPIO_MODE_INPUT, cb_port1, tsd);
+    vst_port_init(&tsd->I_port2, "I_PORT2", 16, GPIO_MODE_INPUT, cb_port2, tsd);
+    vst_gpio_init(&tsd->I_pin1, "I_PIN1", GPIO_MODE_INPUT, cb_pin1, tsd);
 }
 
 /*This is template code for registration new device in qemu*/

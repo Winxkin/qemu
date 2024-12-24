@@ -15,6 +15,10 @@ struct Testgpio {
     uint32_t reg_value;
     qemu_irq irq;  // IRQ line
     MemoryRegion io;
+    // output gpio
+    vst_gpio_pin  O_pin1;  // output gpio
+    vst_gpio_port O_port1; // output gpio
+    vst_gpio_port O_port2; // output gpio
 };
 
 
