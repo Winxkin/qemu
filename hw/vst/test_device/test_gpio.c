@@ -19,19 +19,15 @@ void cb_reg_gpio(void *opaque, Register32 *reg, uint32_t value);
 
 void cb_reg_signal(void *opaque, Register32 *reg, uint32_t value) {
     qemu_log("[test-gpio] Callback for register %s invoked with value 0x%X\n", reg->name, value);
-    Testgpio *tsg = TEST_GPIO(opaque);
+    // Testgpio *tsg = TEST_GPIO(opaque);
 
-    qemu_set_irq(tsg->signal_out[0], value & 0x01);
 }
 
 void cb_reg_gpio(void *opaque, Register32 *reg, uint32_t value) {
     qemu_log("[test-gpio] Callback for register %s invoked with value 0x%X\n", reg->name, value);
-    Testgpio *tsg = TEST_GPIO(opaque);
+    // Testgpio *tsg = TEST_GPIO(opaque);
 
-    for(uint32_t i = 0; i < 32; i++)
-    {
-        qemu_set_irq(tsg->gpio_out[i], (value >> i) & 0x01);
-    }
+    
 }
 
 
@@ -114,8 +110,7 @@ Testgpio *test_gpio_init(MemoryRegion *address_space,
     memory_region_add_subregion(address_space, base, mr);
 
     /*initialize gpio*/
-    // qdev_init_gpio_out_named(DEVICE(tsg), &tsg->gpio_out[0], "gpio-out", 32);
-    // qdev_init_gpio_out_named(DEVICE(tsg), &tsg->signal_out[0], "signal-out", 1);  
+
 
 
     /*initialize register*/

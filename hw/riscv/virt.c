@@ -59,6 +59,7 @@
 #include "hw/vst/test_device/test_device.h"
 #include "hw/vst/test_device/test_gpio.h"
 #include "hw/vst/sha3/sha3.h"
+#include "hw/vst/vst_gpio.h"
 
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool virt_use_kvm_aia(RISCVVirtState *s)
@@ -1712,6 +1713,9 @@ static void virt_machine_init(MachineState *machine)
         qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ_DONE), 
         qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ_DONE));
 
+    /*Binding Internal ports of Virt machine in here*/
+
+
     /*-----------------------------------*/
 
     for (i = 0; i < ARRAY_SIZE(s->flash); i++) {
@@ -1937,11 +1941,18 @@ static void virt_machine_class_init(ObjectClass *oc, void *data)
                                           "Enable ACPI");
 }
 
+static void virt_machine_instance_finalize(Object *obj)
+{
+    // Free all ports | pins bindding data in here
+    vst_free_bindings();
+}
+
 static const TypeInfo virt_machine_typeinfo = {
     .name       = MACHINE_TYPE_NAME("virt"),
     .parent     = TYPE_MACHINE,
     .class_init = virt_machine_class_init,
     .instance_init = virt_machine_instance_init,
+    .instance_finalize = virt_machine_instance_finalize,
     .instance_size = sizeof(RISCVVirtState),
     .interfaces = (InterfaceInfo[]) {
          { TYPE_HOTPLUG_HANDLER },

@@ -13,8 +13,6 @@ struct Testdevice {
     SysBusDevice parent;
     uint32_t reg_value;
     qemu_irq irq;  // IRQ line
-    qemu_irq signal_in[1];  // Signal input line 
-    qemu_irq gpio_in[32];  // GPIO input lines
     MemoryRegion io;
 };
 
