@@ -8,12 +8,27 @@
 #include "hw/vst/reg_interface.h"
 #include "hw/qdev-core.h"
 #include "hw/irq.h"
+#include "exec/memory.h"
+#include "exec/address-spaces.h"
 
 #define REG_PIN1    0x00
 #define REG_PORT1   0x04
 #define REG_PORT2   0x08
-#define MAX_REG 3
+#define REG_ADDR    0x0C
+#define REG_TRANS   0x10
+#define REG_READ    0x14
+#define MAX_REG 6
 Register32 *tsg_reg_list[MAX_REG];
+
+typedef enum REG_NAME
+{
+    e_REG_PIN1 =0,
+    e_REG_PORT1,
+    e_REG_PORT2,
+    e_REG_ADDR,
+    e_REG_TRANS,
+    e_REG_READ
+} REG_NAME;
 
 void test_gpio_register_init(void);
 void test_gpio_gpio_init(Testgpio *tsd);
@@ -21,6 +36,48 @@ void test_gpio_gpio_init(Testgpio *tsd);
 void cb_reg_pin1(void *opaque, Register32 *reg, uint32_t value);
 void cb_reg_port1(void *opaque, Register32 *reg, uint32_t value);
 void cb_reg_port2(void *opaque, Register32 *reg, uint32_t value);
+void cb_reg_trans(void *opaque, Register32 *reg, uint32_t value);
+void cb_reg_read(void *opaque, Register32 *reg, uint32_t value);
+
+void cb_reg_read(void *opaque, Register32 *reg, uint32_t value)
+{
+    qemu_log("[test-gpio] Callback for register %s invoked with value 0x%X\n", reg->name, value);
+
+    hwaddr addr = (hwaddr)tsg_reg_list[e_REG_ADDR]->value ;     // Target memory address
+    MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
+    uint32_t data;                                              // Data to write
+    hwaddr len = 0x04;
+
+    MemTxResult result = address_space_rw(&address_space_memory, addr, attrs, &data, len, false);
+    
+    qemu_log("[test-gpio] Read data: 0x%X\n", data);
+
+    tsg_reg_list[e_REG_READ]->value = (uint32_t)data;
+
+    if (result == MEMTX_OK) {
+        qemu_log("[test-gpio] Read succeeded!\n");
+    } else {
+        qemu_log("[test-gpio] Read failed with result: %d\n", result);
+    }
+}
+
+void cb_reg_trans(void *opaque, Register32 *reg, uint32_t value)
+{
+    qemu_log("[test-gpio] Callback for register %s invoked with value 0x%X\n", reg->name, value);
+
+    hwaddr addr = (hwaddr)tsg_reg_list[e_REG_ADDR]->value ;     // Target memory address
+    MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
+    uint32_t data = value;                                      // Data to write
+    hwaddr len = 0x04;
+
+    MemTxResult result = address_space_write(&address_space_memory, addr, attrs, &data, len);
+
+    if (result == MEMTX_OK) {
+        qemu_log("[test-gpio] Write succeeded!\n");
+    } else {
+        qemu_log("[test-gpio] Write failed with result: %d\n", result);
+    }
+}
 
 void cb_reg_pin1(void *opaque, Register32 *reg, uint32_t value) {
     qemu_log("[test-gpio] Callback for register %s invoked with value 0x%X\n", reg->name, value);
@@ -49,9 +106,12 @@ void cb_reg_port2(void *opaque, Register32 *reg, uint32_t value) {
 
 void test_gpio_register_init(void)
 {
-    tsg_reg_list[0] = create_register32("REG_PIN1", REG_PIN1, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_pin1);
-    tsg_reg_list[1] = create_register32("REG_PORT1", REG_PORT1, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_port1);
-    tsg_reg_list[2] = create_register32("REG_PORT2", REG_PORT2, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_port2);
+    tsg_reg_list[e_REG_PIN1] = create_register32("REG_PIN1", REG_PIN1, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_pin1);
+    tsg_reg_list[e_REG_PORT1] = create_register32("REG_PORT1", REG_PORT1, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_port1);
+    tsg_reg_list[e_REG_PORT2] = create_register32("REG_PORT2", REG_PORT2, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_reg_port2);
+    tsg_reg_list[e_REG_ADDR] = create_register32("REG_ADDR", REG_ADDR, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
+    tsg_reg_list[e_REG_TRANS] = create_register32("REG_TRANS", REG_TRANS, REG_READ_WRITE , 0, 0xFFFFFFFF, cb_reg_trans);
+    tsg_reg_list[e_REG_READ] = create_register32("REG_READ", REG_READ, REG_READ_WRITE , 0, 0xFFFFFFFF, cb_reg_read);
 }
 
 void test_gpio_gpio_init(Testgpio *tsd)
