@@ -57,6 +57,9 @@
 #include "qapi/qapi-visit-common.h"
 #include "hw/virtio/virtio-iommu.h"
 #include "hw/vst/test_device/test_device.h"
+#include "hw/vst/test_device/test_gpio.h"
+#include "hw/vst/sha3/sha3.h"
+#include "hw/vst/vst_gpio.h"
 
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool virt_use_kvm_aia(RISCVVirtState *s)
@@ -90,7 +93,9 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_PCIE_ECAM] =    { 0x30000000,    0x10000000 },
     [VIRT_PCIE_MMIO] =    { 0x40000000,    0x40000000 },
     // [VIRT_DRAM] =         { 0x80000000,           0x0 },
-    [VIRT_TEST_DEVICE] =  { 0x80000000,         0x1000},
+    [VIRT_TEST_DEVICE] =  { 0x80000000,         0x100},
+    [VIRT_TEST_GPIO]  =   { 0x80000100,         0x100},
+    [VIRT_SHA3] =         { 0x80001000,         0x1000},
     [VIRT_DRAM] =         { 0x90000000,           0x0 },
 };
 
@@ -1078,6 +1083,42 @@ static void create_fdt_test_devcie(RISCVVirtState *s, const MemMapEntry *memmap,
     qemu_fdt_setprop_string(ms->fdt, "/chosen", "stdout-path", name);
 }
 
+static void create_fdt_test_gpio(RISCVVirtState *s, const MemMapEntry *memmap,
+                            uint32_t irq_mmio_phandle)
+{
+    g_autofree char *name = NULL;
+    MachineState *ms = MACHINE(s);
+
+    name = g_strdup_printf("/soc/test-gpio@%lx", (long)memmap[VIRT_TEST_GPIO].base);
+    qemu_fdt_add_subnode(ms->fdt, name);
+    qemu_fdt_setprop_string(ms->fdt, name, "compatible", "test-device");
+    qemu_fdt_setprop_cells(ms->fdt, name, "reg",
+        0x0, memmap[VIRT_TEST_GPIO].base,
+        0x0, memmap[VIRT_TEST_GPIO].size);
+    qemu_fdt_setprop_cell(ms->fdt, name, "interrupt-parent", irq_mmio_phandle);
+    qemu_fdt_setprop_cell(ms->fdt, name, "interrupts", TEST_DEVICE_IRQ);
+    qemu_fdt_setprop_string(ms->fdt, "/chosen", "stdout-path", name);
+}
+
+static void create_fdt_sha3(RISCVVirtState *s, const MemMapEntry *memmap,
+                            uint32_t irq_mmio_phandle)
+{
+    g_autofree char *name = NULL;
+    MachineState *ms = MACHINE(s);
+
+    name = g_strdup_printf("/soc/sha3@%lx", (long)memmap[VIRT_SHA3].base);
+    qemu_fdt_add_subnode(ms->fdt, name);
+    qemu_fdt_setprop_string(ms->fdt, name, "compatible", "sha3");
+    qemu_fdt_setprop_cells(ms->fdt, name, "reg",
+        0x0, memmap[VIRT_SHA3].base,
+        0x0, memmap[VIRT_SHA3].size);
+    qemu_fdt_setprop_cell(ms->fdt, name, "interrupt-parent", irq_mmio_phandle);
+    // qemu_fdt_setprop_cell(ms->fdt, name, "interrupts", SHA3_IRQ_DONE);
+    // qemu_fdt_setprop_cell(ms->fdt, name, "interrupts", SHA3_IRQ_ERR);
+    qemu_fdt_setprop_cells(ms->fdt, name, "interrupts", SHA3_IRQ_DONE, 0x8, SHA3_IRQ_ERR, 0x4);
+    qemu_fdt_setprop_string(ms->fdt, "/chosen", "stdout-path", name);
+}
+
 
 /*------------------------------------------------*/
 
@@ -1102,6 +1143,8 @@ static void finalize_fdt(RISCVVirtState *s)
 
     /*Add your custom create_fdt in here*/
     create_fdt_test_devcie(s, virt_memmap, irq_mmio_phandle);
+    create_fdt_test_gpio(s, virt_memmap, irq_mmio_phandle);
+    create_fdt_sha3(s, virt_memmap, irq_mmio_phandle);
 }
 
 static void create_fdt(RISCVVirtState *s, const MemMapEntry *memmap)
@@ -1660,8 +1703,18 @@ static void virt_machine_init(MachineState *machine)
         qdev_get_gpio_in(mmio_irqchip, RTC_IRQ));
 
     /*init your custom device in here*/
-    test_device_init(system_memory, memmap[VIRT_TEST_DEVICE].base,
-        qdev_get_gpio_in(mmio_irqchip, TEST_DEVICE_IRQ));
+    Testgpio *tsg = test_gpio_init(system_memory, memmap[VIRT_TEST_GPIO].base, qdev_get_gpio_in(mmio_irqchip, TEST_GPIO_IRQ));
+        
+    Testdevice *tsd = test_device_init(system_memory, memmap[VIRT_TEST_DEVICE].base, qdev_get_gpio_in(mmio_irqchip, TEST_DEVICE_IRQ));
+
+    sha3_init(system_memory, memmap[VIRT_SHA3].base,
+        qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ_DONE), 
+        qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ_DONE));
+
+    /*Binding Internal ports of Virt machine in here*/
+    vst_port_bind(&tsg->O_port1, &tsd->I_port1);
+    vst_port_bind(&tsg->O_port2, &tsd->I_port2);
+    vst_gpio_bind(&tsg->O_pin1,  &tsd->I_pin1);
 
     /*-----------------------------------*/
 
@@ -1888,11 +1941,18 @@ static void virt_machine_class_init(ObjectClass *oc, void *data)
                                           "Enable ACPI");
 }
 
+static void virt_machine_instance_finalize(Object *obj)
+{
+    // Free all ports | pins bindding data in here
+    vst_free_bindings();
+}
+
 static const TypeInfo virt_machine_typeinfo = {
     .name       = MACHINE_TYPE_NAME("virt"),
     .parent     = TYPE_MACHINE,
     .class_init = virt_machine_class_init,
     .instance_init = virt_machine_instance_init,
+    .instance_finalize = virt_machine_instance_finalize,
     .instance_size = sizeof(RISCVVirtState),
     .interfaces = (InterfaceInfo[]) {
          { TYPE_HOTPLUG_HANDLER },

@@ -9,14 +9,14 @@ struct Register32;
 struct Register64;
 
 // Callback function type
-typedef void (*RegisterCallback32)(struct Register32 *reg, uint32_t value);
-typedef void (*RegisterCallback64)(struct Register64 *reg, uint64_t value);
+typedef void (*RegisterCallback32)(void *opaque, struct Register32 *reg, uint32_t value);
+typedef void (*RegisterCallback64)(void *opaque, struct Register64 *reg, uint64_t value);
 
 // Enum to define register permissions
 typedef enum {
     REG_READ_ONLY = 1,
     REG_WRITE_ONLY = 2,
-    REG_READ_WRITE = REG_READ_ONLY | REG_WRITE_ONLY
+    REG_READ_WRITE = 3
 } RegPermission;
 
 // Structure to represent a register
@@ -42,19 +42,19 @@ typedef struct Register64{
 
 // Function to create a new register
 Register32* create_register32(const char *name, uint32_t base_addr, RegPermission permissions, uint32_t init,  uint32_t mask,
-                                    void (*callback)(Register32 *reg,uint32_t value));
+                                    void (*callback)(void *opaque, Register32 *reg,uint32_t value));
 
 Register64* create_register64(const char *name, uint32_t base_addr, RegPermission permissions, uint64_t init,  uint64_t mask,
-                                    void (*callback)(Register64 *reg,uint64_t value));
+                                    void (*callback)(void *opaque, Register64 *reg,uint64_t value));
 
 // Function to read from a register
-uint32_t read_register32(Register32 *reg);
+uint32_t read_register32(void *opaque, Register32 *reg);
 
-uint64_t read_register64(Register64 *reg);
+uint64_t read_register64(void *opaque, Register64 *reg);
 
 // Function to write to a register
-void write_register32(Register32 *reg, uint32_t value);
+void write_register32(void *opaque, Register32 *reg, uint32_t value);
 
-void write_register64(Register64 *reg, uint64_t value);
+void write_register64(void *opaque, Register64 *reg, uint64_t value);
 
 #endif
