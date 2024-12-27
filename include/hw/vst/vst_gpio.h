@@ -18,14 +18,22 @@ typedef enum
     GPIO_HIGH = 1
 } vst_gpio_state;
 
+typedef enum
+{
+    LEVEL_SENSITIVE = 0,
+    NEGEDGE_SENSITIVE, // 1 -> 0
+    POSEDGE_SENSITIVE // 0 -> 1
+} vst_gpio_trigger;
+
 // GPIO callback function
 typedef void (*vst_gpio_callback_t)(vst_gpio_state state, void *context);
 typedef void (*vst_port_callback_t)(uint32_t value, void *context);
 
 // GPIO Pin structure
-typedef struct vst_gpio_pin 
+typedef struct vst_gpio_pin
 {
     vst_gpio_mode mode;            // Pin mode (input/output)
+    vst_gpio_trigger trigger;      // Trigger type
     vst_gpio_state state;          // Current state (LOW/HIGH)
     const char *name;            // GPIO name (e.g., "GPIO1")
     vst_gpio_callback_t callback;    // Callback for input pin when triggered

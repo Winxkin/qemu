@@ -73,6 +73,7 @@ void test_device_gpio_init(Testdevice *tsd)
     vst_port_init(&tsd->I_port1, "I_PORT1", 32, GPIO_MODE_INPUT, cb_port1, tsd);
     vst_port_init(&tsd->I_port2, "I_PORT2", 16, GPIO_MODE_INPUT, cb_port2, tsd);
     vst_gpio_init(&tsd->I_pin1, "I_PIN1", GPIO_MODE_INPUT, cb_pin1, tsd);
+    tsd->I_pin1.trigger = NEGEDGE_SENSITIVE;
 }
 
 /*This is template code for registration new device in qemu*/

@@ -54,6 +54,11 @@ void vst_port_write(vst_gpio_port *port, uint32_t value)
 {
     if(port->mode == GPIO_MODE_OUTPUT)
     {
+        if(port->value == (value & port->mask))
+        {
+            return;
+        }
+
         port->value = value & port->mask;
         
         vst_port_binding_node_t *current = vst_port_bindings_head;
@@ -61,9 +66,9 @@ void vst_port_write(vst_gpio_port *port, uint32_t value)
         {
             if (current->binding.output_port == port && strcmp(current->binding.output_port->name, port->name) == 0) 
             {
+                current->binding.input_port->value = port->value;
                 if(current->binding.input_port->callback)
                 {
-                    current->binding.input_port->value = port->value;
                     current->binding.input_port->callback(port->value, current->binding.input_port->callback_context);
                 }
             }
@@ -73,9 +78,9 @@ void vst_port_write(vst_gpio_port *port, uint32_t value)
         // the lastest node
         if (current->binding.output_port == port && strcmp(current->binding.output_port->name, port->name) == 0) 
         {
+            current->binding.input_port->value = port->value;
             if(current->binding.input_port->callback)
             {
-                current->binding.input_port->value = port->value;
                 current->binding.input_port->callback(port->value, current->binding.input_port->callback_context);
             }
         }
@@ -153,6 +158,7 @@ void vst_gpio_init(vst_gpio_pin *pin, const char *pin_name, vst_gpio_mode pin_mo
     pin->name = pin_name;
     pin->mode = pin_mode;
     pin->state = GPIO_LOW;
+    pin->trigger = LEVEL_SENSITIVE;
     if (pin_mode == GPIO_MODE_INPUT) 
     {
         pin->callback = callback;
@@ -171,6 +177,11 @@ void vst_gpio_write(vst_gpio_pin *pin, vst_gpio_state state)
 
     if (pin->mode == GPIO_MODE_OUTPUT) 
     {
+        if(pin->state == state)
+        {
+            return;
+        }
+
         pin->state = state;
         // Update all bound input GPIOs if an output changes state
         vst_gpio_binding_node_t *current = vst_gpio_bindings_head;
@@ -179,10 +190,21 @@ void vst_gpio_write(vst_gpio_pin *pin, vst_gpio_state state)
         {
             if (current->binding.output_pin == pin && strcmp(current->binding.output_pin->name, pin->name) == 0) 
             {
+                current->binding.input_pin->state = pin->state;
                 if(current->binding.input_pin->callback)
                 {
-                    current->binding.input_pin->state = pin->state;
-                    current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                    if(current->binding.input_pin->trigger == POSEDGE_SENSITIVE && pin->state == GPIO_HIGH)
+                    {
+                        current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                    }
+                    else if(current->binding.input_pin->trigger == NEGEDGE_SENSITIVE && pin->state == GPIO_LOW)
+                    {
+                        current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                    }
+                    else if(current->binding.input_pin->trigger == LEVEL_SENSITIVE)
+                    {
+                        current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                    }
                 }
             }
             current = current->next; // Traverse to the end of the list
@@ -190,10 +212,21 @@ void vst_gpio_write(vst_gpio_pin *pin, vst_gpio_state state)
         // the lastest node
         if (current->binding.output_pin == pin && strcmp(current->binding.output_pin->name, pin->name) == 0) 
         {
+            current->binding.input_pin->state = pin->state;
             if(current->binding.input_pin->callback)
             {
-                current->binding.input_pin->state = pin->state;
-                current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                if(current->binding.input_pin->trigger == POSEDGE_SENSITIVE && pin->state == GPIO_HIGH)
+                {
+                    current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                }
+                else if(current->binding.input_pin->trigger == NEGEDGE_SENSITIVE && pin->state == GPIO_LOW)
+                {
+                    current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                }
+                else if(current->binding.input_pin->trigger == LEVEL_SENSITIVE)
+                {
+                    current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                }
             }
         }
     } 
