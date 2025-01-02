@@ -11,6 +11,36 @@
 #include "exec/memory.h"
 #include "exec/address-spaces.h"
 
+/*define base address for DMAC registers*/
+#define DMAC_CTRL_REG    0x00
+#define DMAC_START_REG   0x04
+#define DMA_CFG0_REG     0x08
+#define DMA_CFG1_REG     0x0C
+#define DMA_SRC_REG      0x10
+#define DMA_DST_REG      0x14
+#define DMA_SIZE_REG      0x18
+#define DMA_STATUS_REG   0x1C
+
+/*
+---Define bits for DMAC_CTRL_REG---
+        bit 0: DMAEN : default 0x00     (when the DMAEN is clear, DMAC stop operation)
+            - 0x00 : disable
+            - 0x01 : enable
+        bit 1: DMALEVEL : default 0x00  (DMALEVEL is used to select the level sensitive or edge sensitive)
+            - 0x00 : edge sensitive
+            - 0x01 : level sensitive
+        bit 2-3: reserved
+        bit 4-6: MODE
+            - 0x00 : Single transfer (Each transfer require a trigger. DMAEN is automatically cleared when DMA_SIZE_REG is decremented to 0)
+            - 0x01 : Block transfer (A complete blok is transfered with one trigger. DMAEN is automatically cleared at the end of burst-block transfer)
+            - 0x02, 0x03: Brust-block transfer (CPU activity is interleaved with a block transfer. DMAEN is automatically cleared at the end of the brust-transfer)
+            - 0x04: Repeated single transfer (Each transfer require a trigger. DMAEN remain enabled until it is cleared by software)
+            - 0x05: Repeated block transfer (A complete block is transfered with one trigger. DMAEN remain enabled until it is cleared by software)
+            - 0x06, 0x07: Repeated brust-block transfer (CPU activity is interleaved with a block transfer. DMAEN remains enabled until it is cleared by software)
+*/
+
+
+
 
 #define MAX_REG 7
 Register32 *dmac_reg_list[MAX_REG];
