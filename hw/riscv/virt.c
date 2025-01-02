@@ -60,6 +60,7 @@
 #include "hw/vst/test_device/test_gpio.h"
 #include "hw/vst/sha3/sha3.h"
 #include "hw/vst/vst_gpio.h"
+#include "hw/vst/dmac/dmac.h"
 
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool virt_use_kvm_aia(RISCVVirtState *s)
@@ -96,6 +97,7 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_TEST_DEVICE] =  { 0x80000000,         0x100},
     [VIRT_TEST_GPIO]  =   { 0x80000100,         0x100},
     [VIRT_SHA3] =         { 0x80001000,         0x1000},
+    [VIRT_DMAC] =         { 0x80002000,         0x1000},
     [VIRT_DRAM] =         { 0x90000000,           0x0 },
 };
 
@@ -1119,6 +1121,22 @@ static void create_fdt_sha3(RISCVVirtState *s, const MemMapEntry *memmap,
     qemu_fdt_setprop_string(ms->fdt, "/chosen", "stdout-path", name);
 }
 
+static void create_fdt_dmac(RISCVVirtState *s, const MemMapEntry *memmap,
+                            uint32_t irq_mmio_phandle)
+{
+    g_autofree char *name = NULL;
+    MachineState *ms = MACHINE(s);
+
+    name = g_strdup_printf("/soc/sha3@%lx", (long)memmap[VIRT_DMAC].base);
+    qemu_fdt_add_subnode(ms->fdt, name);
+    qemu_fdt_setprop_string(ms->fdt, name, "compatible", "sha3");
+    qemu_fdt_setprop_cells(ms->fdt, name, "reg",
+        0x0, memmap[VIRT_DMAC].base,
+        0x0, memmap[VIRT_DMAC].size);
+    // qemu_fdt_setprop_cell(ms->fdt, name, "interrupt-parent", irq_mmio_phandle);
+    qemu_fdt_setprop_string(ms->fdt, "/chosen", "stdout-path", name);
+}
+
 
 /*------------------------------------------------*/
 
@@ -1145,6 +1163,7 @@ static void finalize_fdt(RISCVVirtState *s)
     create_fdt_test_devcie(s, virt_memmap, irq_mmio_phandle);
     create_fdt_test_gpio(s, virt_memmap, irq_mmio_phandle);
     create_fdt_sha3(s, virt_memmap, irq_mmio_phandle);
+    create_fdt_dmac(s, virt_memmap, irq_mmio_phandle);
 }
 
 static void create_fdt(RISCVVirtState *s, const MemMapEntry *memmap)
@@ -1710,6 +1729,8 @@ static void virt_machine_init(MachineState *machine)
     sha3_init(system_memory, memmap[VIRT_SHA3].base,
         qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ_DONE), 
         qdev_get_gpio_in(mmio_irqchip, SHA3_IRQ_DONE));
+
+    dmac_init(system_memory, memmap[VIRT_DMAC].base);
 
     /*Binding Internal ports of Virt machine in here*/
     vst_port_bind(&tsg->O_port1, &tsd->I_port1);

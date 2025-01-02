@@ -5,3 +5,7 @@ config VST_TEST_DEVICE
 config VST_SHA3
     bool
     default y
+
+config VST_DMAC
+    bool
+    default y

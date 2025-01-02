@@ -88,7 +88,8 @@ enum {
     /*Define your custom device in here*/
     VIRT_TEST_DEVICE,
     VIRT_TEST_GPIO,
-    VIRT_SHA3
+    VIRT_SHA3,
+    VIRT_DMAC
 };
 
 enum {
