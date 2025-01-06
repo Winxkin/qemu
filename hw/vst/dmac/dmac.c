@@ -131,13 +131,10 @@ typedef enum REGISTER_NAME
         bit 0: DMAEN : default 0x00     (when the DMAEN is clear, DMAC stop operation)
             - 0x00 : disable
             - 0x01 : enable
-        bit 1: DMAREQ : default 0x00    (when the DMAREQ is set, DMAC is ready to start operation)
-            - 0x00 : disable
-            - 0x01 : enable
-        bit 2: DMALEVEL : default 0x00  (DMALEVEL is used to select the level sensitive or edge sensitive)
+        bit 1: DMALEVEL : default 0x00  (DMALEVEL is used to select the level sensitive or edge sensitive)
             - 0x00 : edge sensitive
             - 0x01 : level sensitive
-        bit 3: reserved
+        bit 2-3: reserved
         bit 4-6: MODE : default 0x00
             - 0x00 : Single transfer (Each transfer require a trigger. DMAEN is automatically cleared when DMA_SIZE_REG is decremented to 0)
             - 0x01 : Block transfer (A complete blok is transfered with one trigger. DMAEN is automatically cleared at the end of burst-block transfer)
@@ -169,8 +166,7 @@ typedef enum REGISTER_NAME
 */
 
 #define CTRL_DMAEN_BIT(val)     ((val >> 0) & 0x1)
-#define CTRL_DMAREQ_BIT(val)    ((val >> 1) & 0x1)
-#define CTRL_DMALEVEL_BIT(val)  ((val >> 2) & 0x1)
+#define CTRL_DMALEVEL_BIT(val)  ((val >> 1) & 0x1)
 #define CTRL_MODE_BIT(val)      ((val >> 4) & 0x7)
 #define CTRL_DSTINC_BIT(val)    ((val >> 8) & 0x3)
 #define CTRL_SRCINC_BIT(val)    ((val >> 10) & 0x3)
@@ -179,80 +175,88 @@ typedef enum REGISTER_NAME
 #define CTRL_TEST_BIT(val)      ((val >> 31) & 0x1)
 
 /*
----Define bits for DMAC_CTRL0_REG--- (y index from 0 to 4)
-        bit 0-15: CH0SEL : default 0x00 (DMA channel 0 is selected, including 32 trigger sources)
+---Define bits for DMAC_CFG0_REG--- (y index from 0 to 4)
+        bit 0-4: CH0SEL : default 0x00 (DMA channel 0 is selected, including 32 trigger sources)
             - 0x00 : DMA trigger source 0
             - 0x01 : DMA trigger source 1
             - 0x02 : DMA trigger source 2
             ...
             - 0x1F : DMA trigger source 31
-        bit 16-31: CH1SEL : default 0x00 (DMA channel 1 is selected, including 32 trigger sources)
+        bit 5-15: reserved
+        bit 16-20: CH1SEL : default 0x00 (DMA channel 1 is selected, including 32 trigger sources)
             - 0x00 : DMA trigger source 0
             - 0x01 : DMA trigger source 1
             - 0x02 : DMA trigger source 2
             ...
             - 0x1F : DMA trigger source 31
+        bit 21-31: reserved
 */
 
-#define CTRL_CH0SEL_BIT(val)    ((val >> 0) & 0xFFFF)
-#define CTRL_CH1SEL_BIT(val)    ((val >> 16) & 0xFFFF)
+#define CFG_CH0SEL_BIT(val)    ((val >> 0) & 0x1F)
+#define CFG_CH1SEL_BIT(val)    ((val >> 16) & 0x1F)
 
 /*
----Define bits for DMAC_CTRL1_REG--- (y index from 0 to 4)
-        bit 0-15: CH2SEL : default 0x00 (DMA channel 2 is selected, including 32 trigger sources)
+---Define bits for DMAC_CFG1_REG--- (y index from 0 to 4)
+        bit 0-4: CH2SEL : default 0x00 (DMA channel 2 is selected, including 32 trigger sources)
             - 0x00 : DMA trigger source 0
             - 0x01 : DMA trigger source 1
             - 0x02 : DMA trigger source 2
             ...
             - 0x1F : DMA trigger source 31
-        bit 16-31: CH3SEL : default 0x00 (DMA channel 3 is selected, including 32 trigger sources)
+        bit 5-15: reserved
+        bit 16-20: CH3SEL : default 0x00 (DMA channel 3 is selected, including 32 trigger sources)
             - 0x00 : DMA trigger source 0
             - 0x01 : DMA trigger source 1
             - 0x02 : DMA trigger source 2
             ...
             - 0x1F : DMA trigger source 31
+        bit 21-31: reserved
 */
 
-#define CTRL_CH2SEL_BIT(val)    ((val >> 0) & 0xFFFF)
-#define CTRL_CH3SEL_BIT(val)    ((val >> 16) & 0xFFFF)
+#define CFG_CH2SEL_BIT(val)    ((val >> 0) & 0x1F)
+#define CFG_CH3SEL_BIT(val)    ((val >> 16) & 0x1F)
 
 /*
----Define bits for DMAC_CTRL2_REG--- (y index from 0 to 4)
-        bit 0-15: CH4SEL : default 0x00 (DMA channel 4 is selected, including 32 trigger sources)
+---Define bits for DMAC_CFG2_REG--- (y index from 0 to 4)
+        bit 0-4: CH4SEL : default 0x00 (DMA channel 4 is selected, including 32 trigger sources)
             - 0x00 : DMA trigger source 0
             - 0x01 : DMA trigger source 1
             - 0x02 : DMA trigger source 2
             ...
             - 0x1F : DMA trigger source 31
-        bit 16-31: CH5SEL : default 0x00 (DMA channel 5 is selected, including 32 trigger sources)
+        bit 5-15: reserved
+        bit 16-20: CH5SEL : default 0x00 (DMA channel 5 is selected, including 32 trigger sources)
             - 0x00 : DMA trigger source 0
             - 0x01 : DMA trigger source 1
             - 0x02 : DMA trigger source 2
             ...
             - 0x1F : DMA trigger source 31
+        bit 21-31: reserved
 */
 
-#define CTRL_CH4SEL_BIT(val)    ((val >> 0) & 0xFFFF)
-#define CTRL_CH5SEL_BIT(val)    ((val >> 16) & 0xFFFF)
+#define CFG_CH4SEL_BIT(val)    ((val >> 0) & 0x1F)
+#define CFG_CH5SEL_BIT(val)    ((val >> 16) & 0x1F)
 
 /*
----Define bits for DMAC_CTRL3_REG--- (y index from 0 to 4)
-        bit 0-15: CH6SEL : default 0x00 (DMA channel 6 is selected, including 32 trigger sources)
+---Define bits for DMAC_CFG_REG--- (y index from 0 to 4)
+        bit 0-4: CH6SEL : default 0x00 (DMA channel 6 is selected, including 32 trigger sources)
             - 0x00 : DMA trigger source 0
             - 0x01 : DMA trigger source 1
             - 0x02 : DMA trigger source 2
             ...
             - 0x1F : DMA trigger source 31
-        bit 16-31: CH7SEL : default 0x00 (DMA channel 7 is selected, including 32 trigger sources)
+        bit 5-15: reserved
+        bit 16-20: CH7SEL : default 0x00 (DMA channel 7 is selected, including 32 trigger sources)
             - 0x00 : DMA trigger source 0
             - 0x01 : DMA trigger source 1
             - 0x02 : DMA trigger source 2
             ...
             - 0x1F : DMA trigger source 31
+        bit 21-31: reserved
 */
 
-#define CTRL_CH6SEL_BIT(val)    ((val >> 0) & 0xFFFF)
-#define CTRL_CH7SEL_BIT(val)    ((val >> 16) & 0xFFFF)
+#define CFG_CH6SEL_BIT(val)    ((val >> 0) & 0x1F)
+#define CFG_CH7SEL_BIT(val)    ((val >> 16) & 0x1F)
 
 /*
 ---Define bits for DMA_SRCx_REG--- (the x index corresponds to the number of channels from 0 to 7)
@@ -432,9 +436,519 @@ typedef enum REGISTER_NAME
         bit 0-31: TRIGGER : default 0x00 (DMA trigger source from 0 to 31 at channel x)
 */
 
+#define TRIGGER_BIT(bit,val)     ((val >> bit) & 0x1)
+
 
 #define MAX_REG 48
 Register32 *dmac_reg_list[MAX_REG];
+
+/* Internal functions*/
+
+/* The DMA operations are depicted in here*/
+void dma_transfer(DMA_Channel *channel);
+void dma_single_transfer(DMA_Channel *channel);
+void dma_block_transfer(DMA_Channel *channel);
+void dma_set_error(uint32_t id);
+void dma_set_done(uint32_t id);
+void dma_set_run(uint32_t id);
+void dma_set_req(uint32_t id);
+
+void dma_transfer(DMA_Channel *channel)
+{
+    DMA_Channel *dma_ch = (DMA_Channel *)channel;
+
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(CTRL_SRCBYTE_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value) != CTRL_DSTBYTE_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value))
+    {
+        qemu_log("[dmac] (Error) Channel %d: Source and destination byte size are not the same\n", dma_ch->id);
+        dma_set_error(dma_ch->id);
+        return;
+    }
+
+    // DMA transfering in here
+    if(CTRL_MODE_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value) == 0x00) // Single transfer mode
+    {
+        dma_set_run(dma_ch->id);
+        dma_single_transfer(dma_ch);
+    }
+    else if(CTRL_MODE_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value) == 0x01) // block transfer mode
+    {
+        dma_set_run(dma_ch->id);
+        dma_block_transfer(dma_ch);
+    }
+}
+
+void dma_single_transfer(DMA_Channel *channel)
+{
+    DMA_Channel *dma_ch = (DMA_Channel *)channel;
+    qemu_log("[dmac] Channel %d: Single transfer mode\n", dma_ch->id);
+    uint32_t dma_byte;
+
+    if(CTRL_SRCBYTE_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value))
+    {
+        dma_byte = 1;
+        hwaddr src_addr = (hwaddr)dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value ;     // src memory address
+        hwaddr dst_addr = (hwaddr)dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value ;     // src memory address
+        MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
+        char buffer;                                              // buffer 1 bytes
+        MemTxResult result;
+
+        // DMA read from source address
+        result = address_space_rw(&address_space_memory, src_addr, attrs, &buffer, dma_byte, false);
+
+        if (result != MEMTX_OK) 
+        {
+            qemu_log("[dmac] Read data from source address failed with result: %d\n", result);
+        }
+
+        // DMA write to destination address
+        result = address_space_write(&address_space_memory, dst_addr, attrs, &buffer, dma_byte);
+
+        if (result != MEMTX_OK) 
+        {
+            qemu_log("[dmac] Write data to destination address failed with result: %d\n", result);
+        }
+    }
+    else
+    {
+        dma_byte = 4;
+        hwaddr src_addr = (hwaddr)dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value ;     // src memory address
+        hwaddr dst_addr = (hwaddr)dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value ;     // src memory address
+        MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
+        uint32_t buffer;                                              // buffer 4 bytes
+        MemTxResult result;
+
+        // DMA read from source address
+        result = address_space_rw(&address_space_memory, src_addr, attrs, &buffer, dma_byte, false);
+
+        if (result != MEMTX_OK) 
+        {
+            qemu_log("[dmac] Read data from source address failed with result: %d\n", result);
+        }
+        
+        // DMA write to destination address
+        result = address_space_write(&address_space_memory, dst_addr, attrs, &buffer, dma_byte);
+
+        if (result != MEMTX_OK) 
+        {
+            qemu_log("[dmac] Write data to destination address failed with result: %d\n", result);
+        }
+    }
+
+    // Decrease size
+    dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value -= dma_byte;
+    
+    // modify DMA_DST
+    if(CTRL_DSTINC_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value) == 0x03)
+    {
+        dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value += dma_byte;
+    }
+    else if(CTRL_DSTINC_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value) == 0x02)
+    {
+        dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value -= dma_byte;
+    }
+
+    // modify DMA_SRC
+    if(CTRL_SRCINC_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value) == 0x03)
+    {
+        dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value += dma_byte;
+    }
+    else if(CTRL_SRCINC_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value) == 0x02)
+    {
+        dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value -= dma_byte;
+    }
+
+}
+
+void dma_block_transfer(DMA_Channel *channel)
+{
+    DMA_Channel *dma_ch = (DMA_Channel *)channel;
+    qemu_log("[dmac] Channel %d: Block transfer mode\n", dma_ch->id);
+}
+
+void dma_set_error(uint32_t id)
+{
+    switch (id)
+    {
+        case 0:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 3, 3); // Set error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 1, 1); // clear run bit 
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 2, 2); // clear req bit 
+                break;
+            }
+        case 1:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 19, 19); // Set error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 16, 16); // clear done bit 
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+        case 2:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 3, 3); // Set error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 1, 1); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 2, 2); // clear req bit
+                break;
+            }
+        case 3:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 19, 19); // Set error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 16, 16); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+        case 4:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 3, 3); // Set error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 1, 1); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 2, 2); // clear req bit
+                break;
+            }
+        case 5:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 19, 19); // Set error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 16, 16); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+        case 6:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 3, 3); // Set error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 1, 1); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 2, 2); // clear req bit
+                break;
+            }
+        case 7:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 19, 19); // Set error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 16, 16); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+    }
+    
+}
+void dma_set_done(uint32_t id)
+{
+    switch (id)
+    {
+        case 0:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 0, 0); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 1, 1); // clear run bit 
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 2, 2); // clear req bit 
+                break;
+            }
+        case 1:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 16, 16); // set done bit 
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+        case 2:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 0, 0); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 1, 1); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 2, 2); // clear req bit
+                break;
+            }
+        case 3:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 16, 16); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+        case 4:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 0, 0); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 1, 1); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 2, 2); // clear req bit
+                break;
+            }
+        case 5:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 16, 16); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+        case 6:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 0, 0); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 1, 1); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 2, 2); // clear req bit
+                break;
+            }
+        case 7:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 16, 16); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+    }
+}
+
+void dma_set_run(uint32_t id)
+{
+    switch (id)
+    {
+        case 0:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 1, 1); // set run bit 
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 2, 2); // clear req bit 
+                break;
+            }
+        case 1:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 16, 16); // clear done bit 
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 17, 17); // set run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+        case 2:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 1, 1); // set run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 2, 2); // clear req bit
+                break;
+            }
+        case 3:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 16, 16); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 17, 17); // set run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+        case 4:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 1, 1); // set run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 2, 2); // clear req bit
+                break;
+            }
+        case 5:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 16, 16); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 17, 17); // set run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+        case 6:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 1, 1); // set run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 2, 2); // clear req bit
+                break;
+            }
+        case 7:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 16, 16); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 17, 17); // set run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 18, 18); // clear req bit
+                break;
+            }
+    }
+}
+
+void dma_set_req(uint32_t id)
+{
+    switch (id)
+    {
+        case 0:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 1, 1); // clear run bit 
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 2, 2); // set req bit 
+                break;
+            }
+        case 1:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 16, 16); // clear done bit 
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 18, 18); // set req bit
+                break;
+            }
+        case 2:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 1, 1); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 2, 2); // set req bit
+                break;
+            }
+        case 3:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 16, 16); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 18, 18); // set req bit
+                break;
+            }
+        case 4:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 1, 1); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 2, 2); // set req bit
+                break;
+            }
+        case 5:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 16, 16); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 18, 18); // set req bit
+                break;
+            }
+        case 6:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 3, 3); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 0, 0); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 1, 1); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 2, 2); // set req bit
+                break;
+            }
+        case 7:
+            {
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 19, 19); // clear error bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 16, 16); // clear done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 17, 17); // clear run bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 18, 18); // set req bit
+                break;
+            }
+    }
+}
+
+// Function to set thread priority
+int set_thread_priority(pthread_t thread, int priority);
+
+int set_thread_priority(pthread_t thread, int priority) 
+{
+    struct sched_param param;
+    int policy;
+
+    if (pthread_getschedparam(thread, &policy, &param) != 0) {
+        qemu_log("[dmac] Failed to get thread scheduling parameters\n");
+        return -1;
+    }
+
+    // Set scheduling policy to SCHED_RR (Round-Robin) or SCHED_FIFO
+    policy = SCHED_FIFO; // Or SCHED_RR for round-robin scheduling
+
+    // Set the priority
+    param.sched_priority = sched_get_priority_min(policy) + priority;
+
+    // Check valid priority range
+    if (param.sched_priority < sched_get_priority_min(policy) || 
+        param.sched_priority > sched_get_priority_max(policy)) {
+        qemu_log("[dmac] Invalid priority: %d (Valid range: %d-%d)\n", sched_get_priority_min(policy) + priority,
+                 sched_get_priority_min(policy), sched_get_priority_max(policy));
+        return -1;
+    }
+
+    // Apply new scheduling policy and priority
+    if (pthread_setschedparam(thread, policy, &param) != 0) {
+        qemu_log("[dmac] Failed to set thread priority\n");
+        return -1;
+    }
+
+    qemu_log("[dmac] Thread priority set to %d\n", priority);
+    return 0;
+}
+
+/* DMA thread */
+void *dma_channel_thread(void *arg);
+void dmac_trigger_channel(DMACdevice *dmac, int channel_id);
+
+void dmac_trigger_channel(DMACdevice *dmac, int channel_id) 
+{
+    if (channel_id < 0 || channel_id >= 8) {
+        qemu_log("[dmac] Invalid channel ID: %d\n", channel_id);
+        return;
+    }
+
+    DMA_Channel *channel = &dmac->ch_op[channel_id];
+
+    qemu_mutex_lock(&channel->mutex);
+    channel->trigger = 0x01;
+    qemu_cond_signal(&channel->cond); // Signal the channel thread
+    qemu_mutex_unlock(&channel->mutex);
+
+    printf("[dmac] Channel %d: Trigger signal sent\n", channel_id);
+}
+
+void *dma_channel_thread(void *arg)
+{
+    DMA_Channel *dma_ch = (DMA_Channel *)arg;
+    qemu_log("[dmac] DMA channel %d thread started\n", dma_ch->id);
+    
+    while(dma_ch->active) 
+    {
+        qemu_mutex_lock(&dma_ch->mutex);
+        
+        // Wait for trigger signal ...
+        while (!dma_ch->trigger  && dma_ch->active) 
+        {
+            qemu_cond_wait(&dma_ch->cond, &dma_ch->mutex);
+        }
+
+        if (!dma_ch->active) {
+            qemu_mutex_unlock(&dma_ch->mutex);
+            break;
+        }
+
+        // Simulate DMA Transfer
+        qemu_log("[dmac] Channel %d: Trigger received!", dma_ch->id);
+
+        // DMA transfering in here
+        dma_transfer(dma_ch);
+
+        dma_ch->trigger = 0x00;
+        
+        dma_set_req(dma_ch->id);
+        
+        qemu_mutex_unlock(&dma_ch->mutex);
+    }
+
+    qemu_log("[dmac] Channel %d: Shutting down\n", dma_ch->id);
+    return NULL;
+}
 
 
 /*Callback register*/
@@ -446,10 +960,6 @@ void cb_dmac_ctrl4_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dmac_ctrl5_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dmac_ctrl6_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dmac_ctrl7_reg(void *opaque, Register32 *reg, uint32_t value);
-void cb_dma_cfg0_reg(void *opaque, Register32 *reg, uint32_t value);
-void cb_dma_cfg1_reg(void *opaque, Register32 *reg, uint32_t value);
-void cb_dma_cfg2_reg(void *opaque, Register32 *reg, uint32_t value);
-void cb_dma_cfg3_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dma_trigger0_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dma_trigger1_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dma_trigger2_reg(void *opaque, Register32 *reg, uint32_t value);
@@ -461,162 +971,727 @@ void cb_dma_trigger7_reg(void *opaque, Register32 *reg, uint32_t value);
 
 void cb_dmac_ctrl0_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    DMACdevice *dmac = DMAC(opaque);
 
+    if(CTRL_DMAEN_BIT(value))
+    {
+        dma_set_req(0);
+    }
+
+    if(CTRL_DMALEVEL_BIT(value))
+    {
+        qemu_log("[dmac] DMA channel 0 is level triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[0].I_trigger[i].trigger = LEVEL_SENSITIVE;
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] DMA channel 0 is edge triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[0].I_trigger[i].trigger = POSEDGE_SENSITIVE;
+        }
+    }
+
+    if(CTRL_MODE_BIT(value) > 0x07)
+    {
+        qemu_log("[dmac] (Error) DMA channel 0: Invalid mode\n");
+        dma_set_error(0);
+    }
 }
 
 void cb_dmac_ctrl1_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    DMACdevice *dmac = DMAC(opaque);
 
+    if(CTRL_DMAEN_BIT(value))
+    {
+        dma_set_req(1);
+    }
+
+    if(CTRL_DMALEVEL_BIT(value))
+    {
+        qemu_log("[dmac] DMA channel 1 is level triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[1].I_trigger[i].trigger = LEVEL_SENSITIVE;
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] DMA channel 1 is edge triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[1].I_trigger[i].trigger = POSEDGE_SENSITIVE;
+        }
+    }
+
+    if(CTRL_MODE_BIT(value) > 0x07)
+    {
+        qemu_log("[dmac] (Error) DMA channel 1: Invalid mode\n");
+        dma_set_error(1);
+    }
+    
 }
 
 void cb_dmac_ctrl2_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    DMACdevice *dmac = DMAC(opaque);
 
+    if(CTRL_DMAEN_BIT(value))
+    {
+        dma_set_req(2);
+    }
+
+    if(CTRL_DMALEVEL_BIT(value))
+    {
+        qemu_log("[dmac] DMA channel 2 is level triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[2].I_trigger[i].trigger = LEVEL_SENSITIVE;
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] DMA channel 2 is edge triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[2].I_trigger[i].trigger = POSEDGE_SENSITIVE;
+        }
+    }
+
+    if(CTRL_MODE_BIT(value) > 0x07)
+    {
+        qemu_log("[dmac] (Error) DMA channel 2: Invalid mode\n");
+        dma_set_error(2);
+    }
 }
 
 void cb_dmac_ctrl3_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    DMACdevice *dmac = DMAC(opaque);
 
+    if(CTRL_DMAEN_BIT(value))
+    {
+        dma_set_req(3);
+    }
+
+    if(CTRL_DMALEVEL_BIT(value))
+    {
+        qemu_log("[dmac] DMA channel 3 is level triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[3].I_trigger[i].trigger = LEVEL_SENSITIVE;
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] DMA channel 3 is edge triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[3].I_trigger[i].trigger = POSEDGE_SENSITIVE;
+        }
+    }
+
+    if(CTRL_MODE_BIT(value) > 0x07)
+    {
+        qemu_log("[dmac] (Error) DMA channel 3: Invalid mode\n");
+        dma_set_error(3);
+    }
 }
 
 void cb_dmac_ctrl4_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    DMACdevice *dmac = DMAC(opaque);
 
+    if(CTRL_DMAEN_BIT(value))
+    {
+        dma_set_req(4);
+    }
+
+    if(CTRL_DMALEVEL_BIT(value))
+    {
+        qemu_log("[dmac] DMA channel 4 is level triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[4].I_trigger[i].trigger = LEVEL_SENSITIVE;
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] DMA channel 4 is edge triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[4].I_trigger[i].trigger = POSEDGE_SENSITIVE;
+        }
+    }
+
+    if(CTRL_MODE_BIT(value) > 0x07)
+    {
+        qemu_log("[dmac] (Error) DMA channel 4: Invalid mode\n");
+        dma_set_error(4);
+    }
 }
 
 void cb_dmac_ctrl5_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    DMACdevice *dmac = DMAC(opaque);
 
+    if(CTRL_DMAEN_BIT(value))
+    {
+        dma_set_req(5);
+    }
+
+    if(CTRL_DMALEVEL_BIT(value))
+    {
+        qemu_log("[dmac] DMA channel 5 is level triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[5].I_trigger[i].trigger = LEVEL_SENSITIVE;
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] DMA channel 5 is edge triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[5].I_trigger[i].trigger = POSEDGE_SENSITIVE;
+        }
+    }
+
+    if(CTRL_MODE_BIT(value) > 0x07)
+    {
+        qemu_log("[dmac] (Error) DMA channel 5: Invalid mode\n");
+        dma_set_error(5);
+    }
 }
 
 void cb_dmac_ctrl6_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    DMACdevice *dmac = DMAC(opaque);
 
+    if(CTRL_DMAEN_BIT(value))
+    {
+        dma_set_req(6);
+    }
+
+    if(CTRL_DMALEVEL_BIT(value))
+    {
+        qemu_log("[dmac] DMA channel 6 is level triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[6].I_trigger[i].trigger = LEVEL_SENSITIVE;
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] DMA channel 6 is edge triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[6].I_trigger[i].trigger = POSEDGE_SENSITIVE;
+        }
+    }
+
+    if(CTRL_MODE_BIT(value) > 0x07)
+    {
+        qemu_log("[dmac] (Error) DMA channel 6: Invalid mode\n");
+        dma_set_error(6);
+    }
 }
 
 void cb_dmac_ctrl7_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    DMACdevice *dmac = DMAC(opaque);
 
-}
+    if(CTRL_DMAEN_BIT(value))
+    {
+        dma_set_req(7);
+    }
 
-void cb_dma_cfg0_reg(void *opaque, Register32 *reg, uint32_t value)
-{
+    if(CTRL_DMALEVEL_BIT(value))
+    {
+        qemu_log("[dmac] DMA channel 7 is level triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[7].I_trigger[i].trigger = LEVEL_SENSITIVE;
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] DMA channel 7 is edge triggered\n");
+        for(uint32_t i = 0; i < 32; i ++)
+        {
+            dmac->ch[7].I_trigger[i].trigger = POSEDGE_SENSITIVE;
+        }
+    }
 
-}
-
-void cb_dma_cfg1_reg(void *opaque, Register32 *reg, uint32_t value)
-{
-
-}
-
-void cb_dma_cfg2_reg(void *opaque, Register32 *reg, uint32_t value)
-{
-
-}
-
-void cb_dma_cfg3_reg(void *opaque, Register32 *reg, uint32_t value)
-{
-
+    if(CTRL_MODE_BIT(value) > 0x07)
+    {
+        qemu_log("[dmac] (Error) DMA channel 7: Invalid mode\n");
+        dma_set_error(7);
+    }
 }
 
 void cb_dma_trigger0_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    uint32_t index = CFG_CH0SEL_BIT(dmac_reg_list[eDMA_CFG0_REG]->value);
 
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL0_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER0_REG]->value) == TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER0_REG]->pre_value))
+    {   
+        // In case of the trigger bit is not clear before re-triggering
+        return;
+    }
+
+    if(CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL0_REG]->value) && TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER0_REG]->value) && CTRL_DMALEVEL_BIT(dmac_reg_list[eDMAC_CTRL0_REG]->value))
+    {
+        qemu_log("[dmac] Channel 0 is triggered\n");
+        DMACdevice *_dmac = (DMACdevice *)opaque;
+        dmac_trigger_channel(_dmac, 0);
+    }
 }
 
 void cb_dma_trigger1_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    uint32_t index = CFG_CH1SEL_BIT(dmac_reg_list[eDMA_CFG0_REG]->value);
 
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL1_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER1_REG]->value) == TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER1_REG]->pre_value))
+    {   
+        // In case of the trigger bit is not clear before re-triggering
+        return;
+    }
+
+    if(CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL1_REG]->value) && TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER1_REG]->value) && CTRL_DMALEVEL_BIT(dmac_reg_list[eDMAC_CTRL1_REG]->value))
+    {
+        qemu_log("[dmac] Channel 1 is triggered\n");
+        DMACdevice *_dmac = (DMACdevice *)opaque;
+        dmac_trigger_channel(_dmac, 1);
+    }
 }
 
 void cb_dma_trigger2_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    uint32_t index = CFG_CH2SEL_BIT(dmac_reg_list[eDMA_CFG1_REG]->value);
 
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL2_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER2_REG]->value) == TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER2_REG]->pre_value))
+    {   
+        // In case of the trigger bit is not clear before re-triggering
+        return;
+    }
+
+    if(CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL2_REG]->value) && TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER2_REG]->value) && CTRL_DMALEVEL_BIT(dmac_reg_list[eDMAC_CTRL2_REG]->value))
+    {
+        qemu_log("[dmac] Channel 2 is triggered\n");
+        DMACdevice *_dmac = (DMACdevice *)opaque;
+        dmac_trigger_channel(_dmac, 2);
+    }
 }
 
 void cb_dma_trigger3_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    uint32_t index = CFG_CH3SEL_BIT(dmac_reg_list[eDMA_CFG1_REG]->value);
+    
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL3_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
 
+    if(TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER3_REG]->value) == TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER3_REG]->pre_value))
+    {   
+        // In case of the trigger bit is not clear before re-triggering
+        return;
+    }
+
+    if(CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL3_REG]->value) && TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER3_REG]->value) && CTRL_DMALEVEL_BIT(dmac_reg_list[eDMAC_CTRL3_REG]->value))
+    {
+        qemu_log("[dmac] Channel 3 is triggered\n");
+        DMACdevice *_dmac = (DMACdevice *)opaque;
+        dmac_trigger_channel(_dmac, 3);
+    }
 }
 
 void cb_dma_trigger4_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    uint32_t index = CFG_CH4SEL_BIT(dmac_reg_list[eDMA_CFG2_REG]->value);
 
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL4_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER4_REG]->value) == TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER4_REG]->pre_value))
+    {   
+        // In case of the trigger bit is not clear before re-triggering
+        return;
+    }
+
+    if(CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL4_REG]->value) && TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER4_REG]->value) && CTRL_DMALEVEL_BIT(dmac_reg_list[eDMAC_CTRL4_REG]->value))
+    {
+        qemu_log("[dmac] Channel 4 is triggered\n");
+        DMACdevice *_dmac = (DMACdevice *)opaque;
+        dmac_trigger_channel(_dmac, 4);
+    }
 }
 
 void cb_dma_trigger5_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    uint32_t index = CFG_CH5SEL_BIT(dmac_reg_list[eDMA_CFG2_REG]->value);
 
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL5_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER5_REG]->value) == TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER5_REG]->pre_value))
+    {   
+        // In case of the trigger bit is not clear before re-triggering
+        return;
+    }
+
+    if(CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL5_REG]->value) && TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER5_REG]->value) && CTRL_DMALEVEL_BIT(dmac_reg_list[eDMAC_CTRL5_REG]->value))
+    {
+        qemu_log("[dmac] Channel 5 is triggered\n");
+        DMACdevice *_dmac = (DMACdevice *)opaque;
+        dmac_trigger_channel(_dmac, 5);
+    }
 }
 
 void cb_dma_trigger6_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    uint32_t index = CFG_CH6SEL_BIT(dmac_reg_list[eDMA_CFG3_REG]->value);
 
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL6_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER6_REG]->value) == TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER6_REG]->pre_value))
+    {   
+        // In case of the trigger bit is not clear before re-triggering
+        return;
+    }
+
+    if(CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL6_REG]->value) && TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER6_REG]->value) && CTRL_DMALEVEL_BIT(dmac_reg_list[eDMAC_CTRL6_REG]->value))
+    {
+        qemu_log("[dmac] Channel 6 is triggered\n");
+        DMACdevice *_dmac = (DMACdevice *)opaque;
+        dmac_trigger_channel(_dmac, 6);
+    }
 }
 
 void cb_dma_trigger7_reg(void *opaque, Register32 *reg, uint32_t value)
 {
+    uint32_t index = CFG_CH7SEL_BIT(dmac_reg_list[eDMA_CFG3_REG]->value);
 
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL7_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER7_REG]->value) == TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER7_REG]->pre_value))
+    {   
+        // In case of the trigger bit is not clear before re-triggering
+        return;
+    }
+
+    if(CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL7_REG]->value) && TRIGGER_BIT(index, dmac_reg_list[eDMA_TRIGGER7_REG]->value) && CTRL_DMALEVEL_BIT(dmac_reg_list[eDMAC_CTRL7_REG]->value))
+    {
+        qemu_log("[dmac] Channel 7 is triggered\n");
+        DMACdevice *_dmac = (DMACdevice *)opaque;
+        dmac_trigger_channel(_dmac, 7);
+    }
 }
 
 
 /*Callback port or pin*/
-void cb_ch0_trigger_input(vst_gpio_state state, void *context);
-void cb_ch1_trigger_input(vst_gpio_state state, void *context);
-void cb_ch2_trigger_input(vst_gpio_state state, void *context);
-void cb_ch3_trigger_input(vst_gpio_state state, void *context);
-void cb_ch4_trigger_input(vst_gpio_state state, void *context);
-void cb_ch5_trigger_input(vst_gpio_state state, void *context);
-void cb_ch6_trigger_input(vst_gpio_state state, void *context);
-void cb_ch7_trigger_input(vst_gpio_state state, void *context);
+void cb_ch0_trigger_input(vst_gpio_state state, void *context, void *parent);
+void cb_ch1_trigger_input(vst_gpio_state state, void *context, void *parent);
+void cb_ch2_trigger_input(vst_gpio_state state, void *context, void *parent);
+void cb_ch3_trigger_input(vst_gpio_state state, void *context, void *parent);
+void cb_ch4_trigger_input(vst_gpio_state state, void *context, void *parent);
+void cb_ch5_trigger_input(vst_gpio_state state, void *context, void *parent);
+void cb_ch6_trigger_input(vst_gpio_state state, void *context, void *parent);
+void cb_ch7_trigger_input(vst_gpio_state state, void *context, void *parent);
 
 
-void cb_ch0_trigger_input(vst_gpio_state state, void *context)
+void cb_ch0_trigger_input(vst_gpio_state state, void *context, void *parent)
 {
     vst_gpio_pin *pin = (vst_gpio_pin *)context;
     qemu_log("[dmac] Callback for %s invoked with state %d\n", pin->name, state);
+
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL0_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(!CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL0_REG]->value))
+    {
+        uint32_t index = CFG_CH0SEL_BIT(dmac_reg_list[eDMA_CFG0_REG]->value);
+        char name[20];
+        snprintf(name, sizeof(name), "I_ch0_trigger%d", index);
+
+        qemu_log("[dmac] Channel 0 is mapped to trigger input name: %s\n", name);
+
+        if(pin->name == name && state == GPIO_HIGH) 
+        {
+            qemu_log("[dmac] Channel 0 is triggered\n");
+            DMACdevice *_dmac = (DMACdevice *)parent;
+            dmac_trigger_channel(_dmac, 0);
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] Channel 0 is in test mode\n");
+    }
 }
 
-void cb_ch1_trigger_input(vst_gpio_state state, void *context)
+void cb_ch1_trigger_input(vst_gpio_state state, void *context, void *parent)
 {
     vst_gpio_pin *pin = (vst_gpio_pin *)context;
     qemu_log("[dmac] Callback for %s invoked with state %d\n", pin->name, state);
+
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL1_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(!CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL1_REG]->value))
+    {
+        uint32_t index = CFG_CH1SEL_BIT(dmac_reg_list[eDMA_CFG0_REG]->value);
+        char name[20];
+        snprintf(name, sizeof(name), "I_ch1_trigger%d", index);
+
+        qemu_log("[dmac] Channel 1 is mapped to trigger input name: %s\n", name);
+
+        if(pin->name == name && state == GPIO_HIGH)
+        {
+            qemu_log("[dmac] Channel 1 is triggered\n");
+            DMACdevice *_dmac = (DMACdevice *)parent;
+            dmac_trigger_channel(_dmac, 1);
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] Channel 1 is in test mode\n");
+    }
 }
 
-void cb_ch2_trigger_input(vst_gpio_state state, void *context)
+void cb_ch2_trigger_input(vst_gpio_state state, void *context, void *parent)
 {
     vst_gpio_pin *pin = (vst_gpio_pin *)context;
     qemu_log("[dmac] Callback for %s invoked with state %d\n", pin->name, state);
+
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL2_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(!CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL2_REG]->value))
+    {
+        uint32_t index = CFG_CH2SEL_BIT(dmac_reg_list[eDMA_CFG1_REG]->value);
+        char name[20];
+        snprintf(name, sizeof(name), "I_ch2_trigger%d", index);
+
+        qemu_log("[dmac] Channel 2 is mapped to trigger input name: %s\n", name);
+
+        if(pin->name == name && state == GPIO_HIGH)
+        {
+            qemu_log("[dmac] Channel 2 is triggered\n");
+            DMACdevice *_dmac = (DMACdevice *)parent;
+            dmac_trigger_channel(_dmac, 2);
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] Channel 2 is in test mode\n");
+    }
 }
 
-void cb_ch3_trigger_input(vst_gpio_state state, void *context)
+void cb_ch3_trigger_input(vst_gpio_state state, void *context, void *parent)
 {
     vst_gpio_pin *pin = (vst_gpio_pin *)context;
     qemu_log("[dmac] Callback for %s invoked with state %d\n", pin->name, state);
+
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL3_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(!CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL3_REG]->value))
+    {
+        uint32_t index = CFG_CH3SEL_BIT(dmac_reg_list[eDMA_CFG1_REG]->value);
+        char name[20];
+        snprintf(name, sizeof(name), "I_ch3_trigger%d", index);
+
+        qemu_log("[dmac] Channel 3 is mapped to trigger input name: %s\n", name);
+
+        if(pin->name == name && state == GPIO_HIGH)
+        {
+            qemu_log("[dmac] Channel 3 is triggered\n");
+            DMACdevice *_dmac = (DMACdevice *)parent;
+            dmac_trigger_channel(_dmac, 3);
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] Channel 3 is in test mode\n");
+    }
 }
 
-void cb_ch4_trigger_input(vst_gpio_state state, void *context)
+void cb_ch4_trigger_input(vst_gpio_state state, void *context, void *parent)
 {
     vst_gpio_pin *pin = (vst_gpio_pin *)context;
     qemu_log("[dmac] Callback for %s invoked with state %d\n", pin->name, state);
+
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL4_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(!CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL4_REG]->value))
+    {
+        uint32_t index = CFG_CH4SEL_BIT(dmac_reg_list[eDMA_CFG2_REG]->value);
+        char name[20];
+        snprintf(name, sizeof(name), "I_ch4_trigger%d", index);
+
+        qemu_log("[dmac] Channel 4 is mapped to trigger input name: %s\n", name);
+
+        if(pin->name == name && state == GPIO_HIGH)
+        {
+            qemu_log("[dmac] Channel 4 is triggered\n");
+            DMACdevice *_dmac = (DMACdevice *)parent;
+            dmac_trigger_channel(_dmac, 4);
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] Channel 4 is in test mode\n");
+    }
 }
 
-void cb_ch5_trigger_input(vst_gpio_state state, void *context)
+void cb_ch5_trigger_input(vst_gpio_state state, void *context, void *parent)
 {
     vst_gpio_pin *pin = (vst_gpio_pin *)context;
     qemu_log("[dmac] Callback for %s invoked with state %d\n", pin->name, state);
+
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL5_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(!CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL5_REG]->value))
+    {
+        uint32_t index = CFG_CH5SEL_BIT(dmac_reg_list[eDMA_CFG2_REG]->value);
+        char name[20];
+        snprintf(name, sizeof(name), "I_ch5_trigger%d", index);
+        
+        qemu_log("[dmac] Channel 5 is mapped to trigger input name: %s\n", name);
+
+        if(pin->name == name && state == GPIO_HIGH)
+        {
+            qemu_log("[dmac] Channel 5 is triggered\n");
+            DMACdevice *_dmac = (DMACdevice *)parent;
+            dmac_trigger_channel(_dmac, 5);
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] Channel 5 is in test mode\n");
+    }
 }
 
-void cb_ch6_trigger_input(vst_gpio_state state, void *context)
+void cb_ch6_trigger_input(vst_gpio_state state, void *context, void *parent)
 {
     vst_gpio_pin *pin = (vst_gpio_pin *)context;
     qemu_log("[dmac] Callback for %s invoked with state %d\n", pin->name, state);
+
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL6_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(!CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL6_REG]->value))
+    {
+        uint32_t index = CFG_CH6SEL_BIT(dmac_reg_list[eDMA_CFG3_REG]->value);
+        char name[20];
+        snprintf(name, sizeof(name), "I_ch6_trigger%d", index);
+
+        qemu_log("[dmac] Channel 6 is mapped to trigger input name: %s\n", name);
+
+        if(pin->name == name && state == GPIO_HIGH)
+        {
+            qemu_log("[dmac] Channel 6 is triggered\n");
+            DMACdevice *_dmac = (DMACdevice *)parent;
+            dmac_trigger_channel(_dmac, 6);
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] Channel 6 is in test mode\n");
+    }
 }
 
-void cb_ch7_trigger_input(vst_gpio_state state, void *context)
+void cb_ch7_trigger_input(vst_gpio_state state, void *context, void *parent)
 {
     vst_gpio_pin *pin = (vst_gpio_pin *)context;
     qemu_log("[dmac] Callback for %s invoked with state %d\n", pin->name, state);
+
+    if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL7_REG]->value))
+    {
+        // DMAC is disabled
+        return;
+    }
+
+    if(!CTRL_TEST_BIT(dmac_reg_list[eDMAC_CTRL7_REG]->value))
+    {
+        uint32_t index = CFG_CH7SEL_BIT(dmac_reg_list[eDMA_CFG3_REG]->value);
+        char name[20];
+        snprintf(name, sizeof(name), "I_ch7_trigger%d", index);
+
+        qemu_log("[dmac] Channel 7 is mapped to trigger input name: %s\n", name);
+
+        if(pin->name == name && state == GPIO_HIGH)
+        {
+            qemu_log("[dmac] Channel 7 is triggered\n");
+            DMACdevice *_dmac = (DMACdevice *)parent;
+            dmac_trigger_channel(_dmac, 7);
+        }
+    }
+    else
+    {
+        qemu_log("[dmac] Channel 7 is in test mode\n");
+    }
 }
 
 /*Initialization functions are defined in here*/
@@ -633,10 +1708,10 @@ void dmac_register_init(void)
     dmac_reg_list[eDMAC_CTRL5_REG] = create_register32("DMAC_CTRL5_REG", DMAC_CTRL5_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dmac_ctrl5_reg);
     dmac_reg_list[eDMAC_CTRL6_REG] = create_register32("DMAC_CTRL6_REG", DMAC_CTRL6_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dmac_ctrl6_reg);
     dmac_reg_list[eDMAC_CTRL7_REG] = create_register32("DMAC_CTRL7_REG", DMAC_CTRL7_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dmac_ctrl7_reg);
-    dmac_reg_list[eDMA_CFG0_REG] = create_register32("DMA_CFG0_REG", DMA_CFG0_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_cfg0_reg);
-    dmac_reg_list[eDMA_CFG1_REG] = create_register32("DMA_CFG1_REG", DMA_CFG1_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_cfg1_reg);
-    dmac_reg_list[eDMA_CFG2_REG] = create_register32("DMA_CFG2_REG", DMA_CFG2_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_cfg2_reg);
-    dmac_reg_list[eDMA_CFG3_REG] = create_register32("DMA_CFG3_REG", DMA_CFG3_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_cfg3_reg);
+    dmac_reg_list[eDMA_CFG0_REG] = create_register32("DMA_CFG0_REG", DMA_CFG0_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
+    dmac_reg_list[eDMA_CFG1_REG] = create_register32("DMA_CFG1_REG", DMA_CFG1_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
+    dmac_reg_list[eDMA_CFG2_REG] = create_register32("DMA_CFG2_REG", DMA_CFG2_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
+    dmac_reg_list[eDMA_CFG3_REG] = create_register32("DMA_CFG3_REG", DMA_CFG3_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
     dmac_reg_list[eDMA_SRC0_REG] = create_register32("DMA_SRC0_REG", DMA_SRC0_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
     dmac_reg_list[eDMA_SRC1_REG] = create_register32("DMA_SRC1_REG", DMA_SRC1_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
     dmac_reg_list[eDMA_SRC2_REG] = create_register32("DMA_SRC2_REG", DMA_SRC2_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
@@ -681,75 +1756,75 @@ void dmac_gpio_init(DMACdevice *dmac)
     {
         char name[20];
         snprintf(name, sizeof(name), "I_ch0_trigger%d", i);
-        vst_gpio_init(&dmac->ch[0].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch0_trigger_input, &dmac->ch[0].I_trigger[i]);
+        vst_gpio_init(&dmac->ch[0].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch0_trigger_input, &dmac->ch[0].I_trigger[i], dmac);
     }
     
     for (uint32_t i = 0; i < 32; i++) 
     {
         char name[20];
         snprintf(name, sizeof(name), "I_ch1_trigger%d", i);
-        vst_gpio_init(&dmac->ch[1].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch1_trigger_input, &dmac->ch[1].I_trigger[i]);
+        vst_gpio_init(&dmac->ch[1].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch1_trigger_input, &dmac->ch[1].I_trigger[i], dmac);
     }
 
     for (uint32_t i = 0; i < 32; i++) 
     {
         char name[20];
         snprintf(name, sizeof(name), "I_ch2_trigger%d", i);
-        vst_gpio_init(&dmac->ch[2].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch2_trigger_input, &dmac->ch[2].I_trigger[i]);
+        vst_gpio_init(&dmac->ch[2].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch2_trigger_input, &dmac->ch[2].I_trigger[i], dmac);
     }
 
     for (uint32_t i = 0; i < 32; i++) 
     {
         char name[20];
         snprintf(name, sizeof(name), "I_ch3_trigger%d", i);
-        vst_gpio_init(&dmac->ch[3].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch3_trigger_input, &dmac->ch[3].I_trigger[i]);
+        vst_gpio_init(&dmac->ch[3].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch3_trigger_input, &dmac->ch[3].I_trigger[i], dmac);
     }
 
     for (uint32_t i = 0; i < 32; i++) 
     {
         char name[20];
         snprintf(name, sizeof(name), "I_ch4_trigger%d", i);
-        vst_gpio_init(&dmac->ch[4].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch4_trigger_input, &dmac->ch[4].I_trigger[i]);
+        vst_gpio_init(&dmac->ch[4].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch4_trigger_input, &dmac->ch[4].I_trigger[i], dmac);
     }
 
     for (uint32_t i = 0; i < 32; i++) 
     {
         char name[20];
         snprintf(name, sizeof(name), "I_ch5_trigger%d", i);
-        vst_gpio_init(&dmac->ch[5].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch5_trigger_input, &dmac->ch[5].I_trigger[i]);
+        vst_gpio_init(&dmac->ch[5].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch5_trigger_input, &dmac->ch[5].I_trigger[i], dmac);
     }
 
     for (uint32_t i = 0; i < 32; i++) 
     {
         char name[20];
         snprintf(name, sizeof(name), "I_ch6_trigger%d", i);
-        vst_gpio_init(&dmac->ch[6].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch6_trigger_input, &dmac->ch[6].I_trigger[i]);
+        vst_gpio_init(&dmac->ch[6].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch6_trigger_input, &dmac->ch[6].I_trigger[i], dmac);
     }
 
     for (uint32_t i = 0; i < 32; i++) 
     {
         char name[20];
         snprintf(name, sizeof(name), "I_ch7_trigger%d", i);
-        vst_gpio_init(&dmac->ch[7].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch7_trigger_input, &dmac->ch[7].I_trigger[i]);
+        vst_gpio_init(&dmac->ch[7].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch7_trigger_input, &dmac->ch[7].I_trigger[i], dmac);
     }
 
-    vst_gpio_init(&dmac->ch[0].O_done, "O_ch0_done", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[1].O_done, "O_ch1_done", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[2].O_done, "O_ch2_done", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[3].O_done, "O_ch3_done", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[4].O_done, "O_ch4_done", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[5].O_done, "O_ch5_done", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[6].O_done, "O_ch6_done", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[7].O_done, "O_ch7_done", GPIO_MODE_OUTPUT, NULL, NULL);
+    vst_gpio_init(&dmac->ch[0].O_done, "O_ch0_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[1].O_done, "O_ch1_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[2].O_done, "O_ch2_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[3].O_done, "O_ch3_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[4].O_done, "O_ch4_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[5].O_done, "O_ch5_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[6].O_done, "O_ch6_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[7].O_done, "O_ch7_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
 
-    vst_gpio_init(&dmac->ch[0].O_req, "O_ch0_req", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[1].O_req, "O_ch1_req", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[2].O_req, "O_ch2_req", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[3].O_req, "O_ch3_req", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[4].O_req, "O_ch4_req", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[5].O_req, "O_ch5_req", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[6].O_req, "O_ch6_req", GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&dmac->ch[7].O_req, "O_ch7_req", GPIO_MODE_OUTPUT, NULL, NULL);
+    vst_gpio_init(&dmac->ch[0].O_req, "O_ch0_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[1].O_req, "O_ch1_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[2].O_req, "O_ch2_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[3].O_req, "O_ch3_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[4].O_req, "O_ch4_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[5].O_req, "O_ch5_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[6].O_req, "O_ch6_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&dmac->ch[7].O_req, "O_ch7_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
 }
 
 /*This is template code for registration new device in qemu*/
@@ -818,11 +1893,31 @@ DMACdevice *dmac_init(MemoryRegion *address_space, hwaddr base)
     mr = sysbus_mmio_get_region(SYS_BUS_DEVICE(dmac), 0);
     memory_region_add_subregion(address_space, base, mr);
 
-    /*initialize register*/
+    /*register initialize*/
     dmac_register_init();
 
-    /*initialize gpio*/
+    /*gpio initialize*/
     dmac_gpio_init(dmac);
+
+    /*DMA channels initialize*/
+    for(uint i =0 ; i < 8; i++)
+    {
+        dmac->dma_state[i] = eDMA_STATE_REQ;
+        dmac->ch_op[i].active = 0x01;
+        dmac->ch_op[i].trigger = 0x00;
+        dmac->ch_op[i].priority = i;
+        dmac->ch_op[i].id = i;
+
+        qemu_mutex_init(&dmac->ch_op[i].mutex);
+        qemu_cond_init(&dmac->ch_op[i].cond);
+
+
+        qemu_thread_create(&dmac->ch_op[i].thread, "dma_channel_thread",
+                           dma_channel_thread, &dmac->ch_op[i], QEMU_THREAD_JOINABLE);
+
+        set_thread_priority(dmac->ch_op[i].thread.thread, dmac->ch_op[i].priority);
+
+    }
 
     qemu_log("dmac initialized\n");
     return dmac;

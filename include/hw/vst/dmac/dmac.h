@@ -7,23 +7,44 @@
 #include "hw/vst/reg_interface.h"
 #include "hw/vst/vst_gpio.h"
 #include "qemu/thread.h"
+#include "qemu/main-loop.h"
+
 
 #define TYPE_DMAC "dmac"
 OBJECT_DECLARE_SIMPLE_TYPE(DMACdevice, DMAC)
 
-typedef struct DMACH
+typedef enum DMA_STATE
+{
+    eDMA_STATE_REQ = 0,
+    eDMA_STATE_RUN,
+    eDMA_STATE_DONE,
+    eDMA_STATE_ERROR,
+} DMA_STATE;
+
+typedef struct DMAIOCH
 {
     vst_gpio_pin I_trigger[32];
     vst_gpio_pin O_done;
     vst_gpio_pin O_req;
-} DMACH;
+} DMAIOCH;
+
+// DMA Channel Structure
+typedef struct {
+    int id;                 // Channel ID
+    uint8_t active;            // Channel activity state
+    uint8_t trigger;           // Trigger signal
+    QemuCond cond;          // Condition variable for trigger
+    QemuMutex mutex;        // Mutex for channel operation
+    QemuThread thread;     // Thread for channel operation
+    int priority;           // Thread priority
+} DMA_Channel;
 
 typedef struct DMACdevice {
     SysBusDevice parent;
     MemoryRegion io;
-    DMACH ch[8];
-    QemuThread thread;
-    QemuEvent event;
+    DMAIOCH ch[8]; // DMA IO definition
+    DMA_Channel ch_op[8]; // DMA channel operation definition
+    DMA_STATE dma_state[8]; // DMA channel state
 } DMACdevice;
 
 DMACdevice *dmac_init(MemoryRegion *address_space, hwaddr base);

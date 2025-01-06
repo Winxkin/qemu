@@ -45,7 +45,7 @@ void cb_reg_read(void *opaque, Register32 *reg, uint32_t value)
 
     hwaddr addr = (hwaddr)tsg_reg_list[e_REG_ADDR]->value ;     // Target memory address
     MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
-    uint32_t data;                                              // Data to write
+    uint32_t data;                                              // Data to read
     hwaddr len = 0x04;
 
     MemTxResult result = address_space_rw(&address_space_memory, addr, attrs, &data, len, false);
@@ -116,9 +116,9 @@ void test_gpio_register_init(void)
 
 void test_gpio_gpio_init(Testgpio *tsd)
 {
-    vst_port_init(&tsd->O_port1, "O_PORT1", 32, GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_port_init(&tsd->O_port2, "O_PORT2", 16, GPIO_MODE_OUTPUT, NULL, NULL);
-    vst_gpio_init(&tsd->O_pin1, "O_PIN1", GPIO_MODE_OUTPUT, NULL, NULL);
+    vst_port_init(&tsd->O_port1, "O_PORT1", 32, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_port_init(&tsd->O_port2, "O_PORT2", 16, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    vst_gpio_init(&tsd->O_pin1, "O_PIN1", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
 }
 
 /*This is template code for registration new device in qemu*/

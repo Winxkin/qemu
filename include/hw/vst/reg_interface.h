@@ -57,4 +57,6 @@ void write_register32(void *opaque, Register32 *reg, uint32_t value);
 
 void write_register64(void *opaque, Register64 *reg, uint64_t value);
 
+void set_bits(uint32_t *reg_val, uint32_t value, uint32_t bit_start, uint32_t bit_end);
+
 #endif

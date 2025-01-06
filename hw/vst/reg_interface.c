@@ -72,3 +72,15 @@ void write_register64(void *opaque, Register64 *reg, uint64_t value) {
         reg->callback(opaque, reg, value);  // Invoke callback on write if defined
     }
 }
+
+void set_bits(uint32_t *reg_val, uint32_t value, uint32_t bit_start, uint32_t bit_end) 
+{
+    // Create a mask to clear the bits between bit_start and bit_end
+    uint32_t mask = ((1 << (bit_end - bit_start + 1)) - 1) << bit_start;
+    
+    // Clear the bits in the register (set the target bits to 0)
+    *reg_val &= ~mask;
+    
+    // Insert the new value into the cleared bit positions
+    *reg_val |= (value << bit_start) & mask;
+}

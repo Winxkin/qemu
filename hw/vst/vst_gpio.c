@@ -21,7 +21,7 @@ vst_gpio_binding_node_t *vst_gpio_bindings_head = NULL;
 
 
 
-void vst_port_init(vst_gpio_port *port, const char *name, uint32_t num_pins, vst_gpio_mode mode, vst_port_callback_t callback, void *context)
+void vst_port_init(vst_gpio_port *port, const char *name, uint32_t num_pins, vst_gpio_mode mode, vst_port_callback_t callback, void *context, void *parent)
 {
     port->name = name;
 
@@ -42,11 +42,13 @@ void vst_port_init(vst_gpio_port *port, const char *name, uint32_t num_pins, vst
     {
         port->callback = callback;
         port->callback_context = context;
+        port->parent = parent;
     }
     else
     {
         port->callback = NULL;
         port->callback_context = NULL;
+        port->parent = NULL;
     }
 }
 
@@ -69,7 +71,7 @@ void vst_port_write(vst_gpio_port *port, uint32_t value)
                 current->binding.input_port->value = port->value;
                 if(current->binding.input_port->callback)
                 {
-                    current->binding.input_port->callback(port->value, current->binding.input_port->callback_context);
+                    current->binding.input_port->callback(port->value, current->binding.input_port->callback_context, current->binding.input_port->parent);
                 }
             }
             current = current->next; // Traverse to the end of the list
@@ -81,7 +83,7 @@ void vst_port_write(vst_gpio_port *port, uint32_t value)
             current->binding.input_port->value = port->value;
             if(current->binding.input_port->callback)
             {
-                current->binding.input_port->callback(port->value, current->binding.input_port->callback_context);
+                current->binding.input_port->callback(port->value, current->binding.input_port->callback_context, current->binding.input_port->parent);
             }
         }
     }
@@ -153,7 +155,7 @@ int vst_port_bind(vst_gpio_port *output_port, vst_gpio_port *input_port)
 
 
 // Initialize a GPIO group with a set of pins
-void vst_gpio_init(vst_gpio_pin *pin, const char *pin_name, vst_gpio_mode pin_mode, vst_gpio_callback_t callback, void *context) 
+void vst_gpio_init(vst_gpio_pin *pin, const char *pin_name, vst_gpio_mode pin_mode, vst_gpio_callback_t callback, void *context, void *parent) 
 {
     pin->name = pin_name;
     pin->mode = pin_mode;
@@ -163,11 +165,13 @@ void vst_gpio_init(vst_gpio_pin *pin, const char *pin_name, vst_gpio_mode pin_mo
     {
         pin->callback = callback;
         pin->callback_context = context;
+        pin->parent = parent;
     }
     else    
     {
         pin->callback = NULL;
         pin->callback_context = NULL;
+        pin->parent = NULL;
     }
 }
 
@@ -195,15 +199,15 @@ void vst_gpio_write(vst_gpio_pin *pin, vst_gpio_state state)
                 {
                     if(current->binding.input_pin->trigger == POSEDGE_SENSITIVE && pin->state == GPIO_HIGH)
                     {
-                        current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                        current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                     }
                     else if(current->binding.input_pin->trigger == NEGEDGE_SENSITIVE && pin->state == GPIO_LOW)
                     {
-                        current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                        current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                     }
                     else if(current->binding.input_pin->trigger == LEVEL_SENSITIVE)
                     {
-                        current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                        current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                     }
                 }
             }
@@ -217,15 +221,15 @@ void vst_gpio_write(vst_gpio_pin *pin, vst_gpio_state state)
             {
                 if(current->binding.input_pin->trigger == POSEDGE_SENSITIVE && pin->state == GPIO_HIGH)
                 {
-                    current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                    current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                 }
                 else if(current->binding.input_pin->trigger == NEGEDGE_SENSITIVE && pin->state == GPIO_LOW)
                 {
-                    current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                    current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                 }
                 else if(current->binding.input_pin->trigger == LEVEL_SENSITIVE)
                 {
-                    current->binding.input_pin->callback(state, current->binding.input_pin->callback_context);
+                    current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                 }
             }
         }
