@@ -442,6 +442,8 @@ typedef enum REGISTER_NAME
 #define MAX_REG 48
 Register32 *dmac_reg_list[MAX_REG];
 
+QemuSpin spinlock; // Declare a spinlock
+DMACdevice *gdmac; // Declare a global DMAC device
 /* Internal functions*/
 
 /* The DMA operations are depicted in here*/
@@ -642,6 +644,7 @@ void dma_set_error(uint32_t id)
     }
     
 }
+
 void dma_set_done(uint32_t id)
 {
     switch (id)
@@ -711,6 +714,10 @@ void dma_set_done(uint32_t id)
                 break;
             }
     }
+
+    // edge triggered output signal O_done
+    vst_gpio_write(&gdmac->ch[id].O_done, GPIO_HIGH);
+    vst_gpio_write(&gdmac->ch[id].O_done, GPIO_LOW);
 }
 
 void dma_set_run(uint32_t id)
@@ -853,43 +860,10 @@ void dma_set_req(uint32_t id)
                 break;
             }
     }
-}
 
-// Function to set thread priority
-int set_thread_priority(pthread_t thread, int priority);
-
-int set_thread_priority(pthread_t thread, int priority) 
-{
-    struct sched_param param;
-    int policy;
-
-    if (pthread_getschedparam(thread, &policy, &param) != 0) {
-        qemu_log("[dmac] Failed to get thread scheduling parameters\n");
-        return -1;
-    }
-
-    // Set scheduling policy to SCHED_RR (Round-Robin) or SCHED_FIFO
-    policy = SCHED_FIFO; // Or SCHED_RR for round-robin scheduling
-
-    // Set the priority
-    param.sched_priority = sched_get_priority_min(policy) + priority;
-
-    // Check valid priority range
-    if (param.sched_priority < sched_get_priority_min(policy) || 
-        param.sched_priority > sched_get_priority_max(policy)) {
-        qemu_log("[dmac] Invalid priority: %d (Valid range: %d-%d)\n", sched_get_priority_min(policy) + priority,
-                 sched_get_priority_min(policy), sched_get_priority_max(policy));
-        return -1;
-    }
-
-    // Apply new scheduling policy and priority
-    if (pthread_setschedparam(thread, policy, &param) != 0) {
-        qemu_log("[dmac] Failed to set thread priority\n");
-        return -1;
-    }
-
-    qemu_log("[dmac] Thread priority set to %d\n", priority);
-    return 0;
+    // edge triggered output signal O_req
+    vst_gpio_write(&gdmac->ch[id].O_req, GPIO_HIGH);
+    vst_gpio_write(&gdmac->ch[id].O_req, GPIO_LOW);
 }
 
 /* DMA thread */
@@ -905,10 +879,17 @@ void dmac_trigger_channel(DMACdevice *dmac, int channel_id)
 
     DMA_Channel *channel = &dmac->ch_op[channel_id];
 
-    qemu_mutex_lock(&channel->mutex);
-    channel->trigger = 0x01;
-    qemu_cond_signal(&channel->cond); // Signal the channel thread
-    qemu_mutex_unlock(&channel->mutex);
+    if(qemu_spin_trylock(&spinlock) == 0)
+    {
+        qemu_mutex_lock(&channel->mutex);
+        qemu_cond_signal(&channel->cond);   // Signal the channel thread
+        qemu_mutex_unlock(&channel->mutex);
+        qemu_spin_unlock(&spinlock);
+    }
+    else
+    {
+        qemu_log("[dmac] DMA is busy !\n");
+    }
 
     printf("[dmac] Channel %d: Trigger signal sent\n", channel_id);
 }
@@ -916,20 +897,26 @@ void dmac_trigger_channel(DMACdevice *dmac, int channel_id)
 void *dma_channel_thread(void *arg)
 {
     DMA_Channel *dma_ch = (DMA_Channel *)arg;
-    qemu_log("[dmac] DMA channel %d thread started\n", dma_ch->id);
+    // qemu_log("[dmac] DMA channel %d thread started\n", dma_ch->id);
     
     while(dma_ch->active) 
     {
+        if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value))
+        {
+            // DMAC is disabled
+            continue;
+        }
+        // Acquire the spinlock
+        qemu_spin_lock(&spinlock);
         qemu_mutex_lock(&dma_ch->mutex);
         
         // Wait for trigger signal ...
-        while (!dma_ch->trigger  && dma_ch->active) 
-        {
-            qemu_cond_wait(&dma_ch->cond, &dma_ch->mutex);
-        }
+        qemu_log("[dmac] Channel %d: Waiting for trigger signal\n", dma_ch->id);
+        qemu_cond_wait(&dma_ch->cond, &dma_ch->mutex);
 
         if (!dma_ch->active) {
             qemu_mutex_unlock(&dma_ch->mutex);
+            qemu_spin_unlock(&spinlock);
             break;
         }
 
@@ -938,12 +925,11 @@ void *dma_channel_thread(void *arg)
 
         // DMA transfering in here
         dma_transfer(dma_ch);
-
-        dma_ch->trigger = 0x00;
         
         dma_set_req(dma_ch->id);
-        
+
         qemu_mutex_unlock(&dma_ch->mutex);
+        qemu_spin_unlock(&spinlock);
     }
 
     qemu_log("[dmac] Channel %d: Shutting down\n", dma_ch->id);
@@ -976,6 +962,7 @@ void cb_dmac_ctrl0_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(0);
+        qemu_log("[dmac] DMA channel 0 is enabled\n");
     }
 
     if(CTRL_DMALEVEL_BIT(value))
@@ -1009,6 +996,7 @@ void cb_dmac_ctrl1_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(1);
+        qemu_log("[dmac] DMA channel 1 is enabled\n");
     }
 
     if(CTRL_DMALEVEL_BIT(value))
@@ -1043,6 +1031,7 @@ void cb_dmac_ctrl2_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(2);
+        qemu_log("[dmac] DMA channel 2 is enabled\n");
     }
 
     if(CTRL_DMALEVEL_BIT(value))
@@ -1076,6 +1065,7 @@ void cb_dmac_ctrl3_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(3);
+        qemu_log("[dmac] DMA channel 3 is enabled\n");
     }
 
     if(CTRL_DMALEVEL_BIT(value))
@@ -1109,6 +1099,7 @@ void cb_dmac_ctrl4_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(4);
+        qemu_log("[dmac] DMA channel 4 is enabled\n");
     }
 
     if(CTRL_DMALEVEL_BIT(value))
@@ -1142,6 +1133,7 @@ void cb_dmac_ctrl5_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(5);
+        qemu_log("[dmac] DMA channel 5 is enabled\n");
     }
 
     if(CTRL_DMALEVEL_BIT(value))
@@ -1175,6 +1167,7 @@ void cb_dmac_ctrl6_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(6);
+        qemu_log("[dmac] DMA channel 6 is enabled\n");
     }
 
     if(CTRL_DMALEVEL_BIT(value))
@@ -1208,6 +1201,7 @@ void cb_dmac_ctrl7_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(7);
+        qemu_log("[dmac] DMA channel 7 is enabled\n");
     }
 
     if(CTRL_DMALEVEL_BIT(value))
@@ -1882,6 +1876,24 @@ static void dmac_realize(DeviceState *dev, Error **errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(dmac), &dmac->io);
 }
 
+static void dmac_unrealize(DeviceState *dev)
+{
+    DMACdevice *dmac = DMAC(dev);
+
+    for(uint i =0 ; i < 8; i++)
+    {
+        qemu_thread_join(&dmac->ch_op[i].thread);
+    }
+
+    for(uint i =0 ; i < 8; i++)
+    {
+        qemu_mutex_destroy(&dmac->ch_op[i].mutex);
+        qemu_cond_destroy(&dmac->ch_op[i].cond);
+
+    }
+    qemu_spin_destroy(&spinlock);
+}
+
 DMACdevice *dmac_init(MemoryRegion *address_space, hwaddr base)
 {
     DMACdevice *dmac = DMAC(qdev_new(TYPE_DMAC));
@@ -1900,25 +1912,22 @@ DMACdevice *dmac_init(MemoryRegion *address_space, hwaddr base)
     dmac_gpio_init(dmac);
 
     /*DMA channels initialize*/
+    qemu_spin_init(&spinlock);
     for(uint i =0 ; i < 8; i++)
     {
         dmac->dma_state[i] = eDMA_STATE_REQ;
         dmac->ch_op[i].active = 0x01;
-        dmac->ch_op[i].trigger = 0x00;
-        dmac->ch_op[i].priority = i;
         dmac->ch_op[i].id = i;
 
         qemu_mutex_init(&dmac->ch_op[i].mutex);
         qemu_cond_init(&dmac->ch_op[i].cond);
 
-
         qemu_thread_create(&dmac->ch_op[i].thread, "dma_channel_thread",
                            dma_channel_thread, &dmac->ch_op[i], QEMU_THREAD_JOINABLE);
 
-        set_thread_priority(dmac->ch_op[i].thread.thread, dmac->ch_op[i].priority);
-
     }
 
+    gdmac = dmac;
     qemu_log("dmac initialized\n");
     return dmac;
 }
@@ -1929,6 +1938,7 @@ static void dmac_class_init(ObjectClass *oc, void *data)
     DeviceClass *dc = DEVICE_CLASS(oc);
 
     dc->realize = dmac_realize;
+    dc->unrealize = dmac_unrealize;
     dc->vmsd = &vmstate_dmac;
 }
 
