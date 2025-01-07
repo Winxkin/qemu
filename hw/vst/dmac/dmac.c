@@ -601,10 +601,6 @@ void dma_single_transfer(DMA_Channel *channel)
         dma_set_done(dma_ch->id);
         set_bits(&dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value, 0, 0, 0); // clear DMAEN bit
         qemu_log("[dmac] Channel %d: DMA transfer is done\n", dma_ch->id);
-
-        dma_ch->size = dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value;
-        dma_ch->src_addr = dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value;
-        dma_ch->dst_addr = dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value;
     }
     else
     {
@@ -716,9 +712,6 @@ void dma_block_transfer(DMA_Channel *channel)
             dma_set_done(dma_ch->id);
             set_bits(&dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value, 0, 0, 0); // clear DMAEN bit
             qemu_log("[dmac] Channel %d: DMA transfer is done\n", dma_ch->id);
-            dma_ch->size = dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value;
-            dma_ch->src_addr = dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value;
-            dma_ch->dst_addr = dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value;
             break;
         }
     }
@@ -1017,41 +1010,49 @@ void dma_set_done(uint32_t id)
         case 0:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 0, 0); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 1, 1); // clear run bit 
                 break;
             }
         case 1:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 16, 16); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 17, 17); // clear run bit
                 break;
             }
         case 2:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 0, 0); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 1, 1); // clear run bit
                 break;
             }
         case 3:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 16, 16); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 17, 17); // clear run bit
                 break;
             }
         case 4:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 0, 0); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 1, 1); // clear run bit
                 break;
             }
         case 5:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 16, 16); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 17, 17); // clear run bit
                 break;
             }
         case 6:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 0, 0); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 1, 1); // clear run bit
                 break;
             }
         case 7:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 16, 16); // set done bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 17, 17); // clear run bit
                 break;
             }
     }
@@ -1141,42 +1142,50 @@ void dma_set_req(uint32_t id)
     {
         case 0:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 2, 2); // set req bit 
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 2, 2); // set req bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 1, 1); // clear run bit 
                 break;
             }
         case 1:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 18, 18); // set req bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 17, 17); // clear run bit
                 break;
             }
         case 2:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 2, 2); // set req bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 1, 1); // clear run bit
                 break;
             }
         case 3:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 18, 18); // set req bit
+                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 17, 17); // clear run bit
                 break;
             }
         case 4:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 2, 2); // set req bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 1, 1); // clear run bit
                 break;
             }
         case 5:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 18, 18); // set req bit
+                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 17, 17); // clear run bit
                 break;
             }
         case 6:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 2, 2); // set req bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 1, 1); // clear run bit
                 break;
             }
         case 7:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 18, 18); // set req bit
+                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 17, 17); // clear run bit
                 break;
             }
     }
@@ -1255,6 +1264,9 @@ void cb_dmac_ctrl0_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(0);
+        set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 0, 0); // clear done bit
+        set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 1, 1); // clear run bit 
+        set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 3, 3); // clear error bit
         qemu_log("[dmac] DMA channel 0 is enabled\n");
     }
 
@@ -1290,6 +1302,9 @@ void cb_dmac_ctrl1_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(1);
+        set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 16, 16); // clear done bit
+        set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 17, 17); // clear run bit
+        set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 19, 19); // clear error bit
         qemu_log("[dmac] DMA channel 1 is enabled\n");
     }
 
@@ -1325,6 +1340,9 @@ void cb_dmac_ctrl2_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(2);
+        set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 0, 0); // clear done bit
+        set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 1, 1); // clear run bit
+        set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 3, 3); // clear error bit
         qemu_log("[dmac] DMA channel 2 is enabled\n");
     }
 
@@ -1359,6 +1377,9 @@ void cb_dmac_ctrl3_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(3);
+        set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 16, 16); // clear done bit
+        set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 17, 17); // clear run bit
+        set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 19, 19); // clear error bit
         qemu_log("[dmac] DMA channel 3 is enabled\n");
     }
 
@@ -1393,6 +1414,9 @@ void cb_dmac_ctrl4_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(4);
+        set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 0, 0); // clear done bit
+        set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 1, 1); // clear run bit
+        set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 3, 3); // clear error bit
         qemu_log("[dmac] DMA channel 4 is enabled\n");
     }
 
@@ -1427,6 +1451,9 @@ void cb_dmac_ctrl5_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(5);
+        set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 16, 16); // clear done bit
+        set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 17, 17); // clear run bit
+        set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 19, 19); // clear error bit
         qemu_log("[dmac] DMA channel 5 is enabled\n");
     }
 
@@ -1461,6 +1488,9 @@ void cb_dmac_ctrl6_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(6);
+        set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 0, 0); // clear done bit
+        set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 1, 1); // clear run bit
+        set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 3, 3); // clear error bit
         qemu_log("[dmac] DMA channel 6 is enabled\n");
     }
 
@@ -1495,6 +1525,9 @@ void cb_dmac_ctrl7_reg(void *opaque, Register32 *reg, uint32_t value)
     if(CTRL_DMAEN_BIT(value))
     {
         dma_set_req(7);
+        set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 16, 16); // clear done bit
+        set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 17, 17); // clear run bit
+        set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 19, 19); // clear error bit
         qemu_log("[dmac] DMA channel 7 is enabled\n");
     }
 
