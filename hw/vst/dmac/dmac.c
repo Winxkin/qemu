@@ -802,7 +802,7 @@ void dma_repeated_single_transfer(DMA_Channel *channel)
     // modify DMA_DST
     if(CTRL_DSTINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x03)
     {
-        dma_ch->src_addr += dma_byte;
+        dma_ch->dst_addr += dma_byte;
     }
     else if(CTRL_DSTINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x02)
     {
@@ -816,7 +816,7 @@ void dma_repeated_single_transfer(DMA_Channel *channel)
     }
     else if(CTRL_SRCINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x02)
     {
-        dma_ch->dst_addr -= dma_byte;
+        dma_ch->src_addr -= dma_byte;
     }
 
     // Decrease size
@@ -826,6 +826,10 @@ void dma_repeated_single_transfer(DMA_Channel *channel)
         // Set DMA done status and clear DMAEN bit
         dma_set_done(dma_ch->id);
         qemu_log("[dmac] Channel %d: DMA transfer is done\n", dma_ch->id);
+        // Reload size, src_addr, dst_addr
+        dma_ch->size = dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value;
+        dma_ch->src_addr = dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value;
+        dma_ch->dst_addr = dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value;
         // request for next repeated transfer
         dma_set_req(dma_ch->id);
     }
@@ -839,16 +843,16 @@ void dma_repeated_single_transfer(DMA_Channel *channel)
 void dma_repeated_block_transfer(DMA_Channel *channel)
 {
     DMA_Channel *dma_ch = (DMA_Channel *)channel;
-    qemu_log("[dmac] Channel %d: Block transfer mode\n", dma_ch->id);
+    qemu_log("[dmac] Channel %d: Repeated block transfer mode\n", dma_ch->id);
     uint32_t dma_byte;
 
-    while(dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value != 0)
+    while(dma_ch->size != 0)
     {
         if(CTRL_SRCBYTE_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value))
         {
             dma_byte = 1;
-            hwaddr src_addr = (hwaddr)dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value ;     // src memory address
-            hwaddr dst_addr = (hwaddr)dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value ;     // src memory address
+            hwaddr src_addr = (hwaddr)dma_ch->src_addr;     // src memory address
+            hwaddr dst_addr = (hwaddr)dma_ch->dst_addr;     // src memory address
             MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
             char buffer;                                              // buffer 1 bytes
             MemTxResult result;
@@ -880,8 +884,8 @@ void dma_repeated_block_transfer(DMA_Channel *channel)
         else
         {
             dma_byte = 4;
-            hwaddr src_addr = (hwaddr)dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value ;     // src memory address
-            hwaddr dst_addr = (hwaddr)dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value ;     // src memory address
+            hwaddr src_addr = (hwaddr)dma_ch->src_addr;     // src memory address
+            hwaddr dst_addr = (hwaddr)dma_ch->dst_addr;     // src memory address
             MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
             uint32_t buffer;                                              // buffer 4 bytes
             MemTxResult result;
@@ -914,7 +918,7 @@ void dma_repeated_block_transfer(DMA_Channel *channel)
         // modify DMA_DST
         if(CTRL_DSTINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x03)
         {
-            dma_ch->src_addr += dma_byte;
+            dma_ch->dst_addr += dma_byte;
         }
         else if(CTRL_DSTINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x02)
         {
@@ -928,7 +932,7 @@ void dma_repeated_block_transfer(DMA_Channel *channel)
         }
         else if(CTRL_SRCINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x02)
         {
-            dma_ch->dst_addr -= dma_byte;
+            dma_ch->src_addr -= dma_byte;
         }
 
         // Decrease size
@@ -938,6 +942,10 @@ void dma_repeated_block_transfer(DMA_Channel *channel)
             // Set DMA done status and clear DMAEN bit
             dma_set_done(dma_ch->id);
             qemu_log("[dmac] Channel %d: DMA transfer is done\n", dma_ch->id);
+            // Reload size, src_addr, dst_addr
+            dma_ch->size = dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value;
+            dma_ch->src_addr = dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value;
+            dma_ch->dst_addr = dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value;
             // request for next repeated transfer
             dma_set_req(dma_ch->id);
             break;
@@ -953,65 +961,49 @@ void dma_set_error(uint32_t id)
         case 0:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 3, 3); // Set error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 0, 0); // clear done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 1, 1); // clear run bit 
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 2, 2); // clear req bit 
                 break;
             }
         case 1:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 19, 19); // Set error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 16, 16); // clear done bit 
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 17, 17); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 18, 18); // clear req bit
                 break;
             }
         case 2:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 3, 3); // Set error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 0, 0); // clear done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 1, 1); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 2, 2); // clear req bit
                 break;
             }
         case 3:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 19, 19); // Set error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 16, 16); // clear done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 17, 17); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 18, 18); // clear req bit
                 break;
             }
         case 4:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 3, 3); // Set error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 0, 0); // clear done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 1, 1); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 2, 2); // clear req bit
                 break;
             }
         case 5:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 19, 19); // Set error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 16, 16); // clear done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 17, 17); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 18, 18); // clear req bit
                 break;
             }
         case 6:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 3, 3); // Set error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 0, 0); // clear done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 1, 1); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 2, 2); // clear req bit
                 break;
             }
         case 7:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 19, 19); // Set error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 16, 16); // clear done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 17, 17); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 18, 18); // clear req bit
                 break;
             }
     }
@@ -1024,72 +1016,51 @@ void dma_set_done(uint32_t id)
     {
         case 0:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 3, 3); // clear error bit
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 0, 0); // set done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 1, 1); // clear run bit 
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 2, 2); // clear req bit 
                 break;
             }
         case 1:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 19, 19); // clear error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 16, 16); // set done bit 
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 17, 17); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 18, 18); // clear req bit
+                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 16, 16); // set done bit
                 break;
             }
         case 2:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 3, 3); // clear error bit
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 0, 0); // set done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 1, 1); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 2, 2); // clear req bit
                 break;
             }
         case 3:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 19, 19); // clear error bit
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 16, 16); // set done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 17, 17); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 18, 18); // clear req bit
                 break;
             }
         case 4:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 3, 3); // clear error bit
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 0, 0); // set done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 1, 1); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 2, 2); // clear req bit
                 break;
             }
         case 5:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 19, 19); // clear error bit
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 16, 16); // set done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 17, 17); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 18, 18); // clear req bit
                 break;
             }
         case 6:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 3, 3); // clear error bit
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 0, 0); // set done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 1, 1); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 2, 2); // clear req bit
                 break;
             }
         case 7:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 19, 19); // clear error bit
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 16, 16); // set done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 17, 17); // clear run bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 18, 18); // clear req bit
                 break;
             }
     }
 
     // edge triggered output signal O_done
+    vst_gpio_write(&gdmac->ch[id].O_done, GPIO_LOW);
+    usleep(1000);
     vst_gpio_write(&gdmac->ch[id].O_done, GPIO_HIGH);
+    usleep(1000);
     vst_gpio_write(&gdmac->ch[id].O_done, GPIO_LOW);
 }
 
@@ -1170,72 +1141,51 @@ void dma_set_req(uint32_t id)
     {
         case 0:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 3, 3); // clear error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 0, 0); // clear done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 1, 1); // clear run bit 
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 2, 2); // set req bit 
                 break;
             }
         case 1:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 19, 19); // clear error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 16, 16); // clear done bit 
-                set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 17, 17); // clear run bit
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 18, 18); // set req bit
                 break;
             }
         case 2:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 3, 3); // clear error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 0, 0); // clear done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 1, 1); // clear run bit
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 2, 2); // set req bit
                 break;
             }
         case 3:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 19, 19); // clear error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 16, 16); // clear done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 17, 17); // clear run bit
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 18, 18); // set req bit
                 break;
             }
         case 4:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 3, 3); // clear error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 0, 0); // clear done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 1, 1); // clear run bit
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 2, 2); // set req bit
                 break;
             }
         case 5:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 19, 19); // clear error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 16, 16); // clear done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 17, 17); // clear run bit
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 18, 18); // set req bit
                 break;
             }
         case 6:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 3, 3); // clear error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 0, 0); // clear done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 1, 1); // clear run bit
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 2, 2); // set req bit
                 break;
             }
         case 7:
             {
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 19, 19); // clear error bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 16, 16); // clear done bit
-                set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 17, 17); // clear run bit
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 18, 18); // set req bit
                 break;
             }
     }
 
     // edge triggered output signal O_req
+    vst_gpio_write(&gdmac->ch[id].O_req, GPIO_LOW);
+    usleep(1000);
     vst_gpio_write(&gdmac->ch[id].O_req, GPIO_HIGH);
+    usleep(1000);
     vst_gpio_write(&gdmac->ch[id].O_req, GPIO_LOW);
 }
 
