@@ -199,14 +199,24 @@ void vst_gpio_write(vst_gpio_pin *pin, vst_gpio_state state)
                 {
                     if(current->binding.input_pin->trigger == POSEDGE_SENSITIVE && pin->state == GPIO_HIGH)
                     {
+                        current->binding.input_pin->current_trigger = POSEDGE_SENSITIVE;
                         current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                     }
                     else if(current->binding.input_pin->trigger == NEGEDGE_SENSITIVE && pin->state == GPIO_LOW)
                     {
+                        current->binding.input_pin->current_trigger = NEGEDGE_SENSITIVE;
                         current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                     }
                     else if(current->binding.input_pin->trigger == LEVEL_SENSITIVE)
                     {
+                        if(current->binding.input_pin->state == GPIO_HIGH)
+                        {
+                            current->binding.input_pin->current_trigger = POSEDGE_SENSITIVE;
+                        }
+                        else
+                        {
+                            current->binding.input_pin->current_trigger = NEGEDGE_SENSITIVE;
+                        }
                         current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                     }
                 }
@@ -221,14 +231,24 @@ void vst_gpio_write(vst_gpio_pin *pin, vst_gpio_state state)
             {
                 if(current->binding.input_pin->trigger == POSEDGE_SENSITIVE && pin->state == GPIO_HIGH)
                 {
+                    current->binding.input_pin->current_trigger = POSEDGE_SENSITIVE;
                     current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                 }
                 else if(current->binding.input_pin->trigger == NEGEDGE_SENSITIVE && pin->state == GPIO_LOW)
                 {
+                    current->binding.input_pin->current_trigger = NEGEDGE_SENSITIVE;
                     current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                 }
                 else if(current->binding.input_pin->trigger == LEVEL_SENSITIVE)
                 {
+                    if(current->binding.input_pin->state == GPIO_HIGH)
+                    {
+                        current->binding.input_pin->current_trigger = POSEDGE_SENSITIVE;
+                    }
+                    else
+                    {
+                        current->binding.input_pin->current_trigger = NEGEDGE_SENSITIVE;
+                    }
                     current->binding.input_pin->callback(state, current->binding.input_pin->callback_context, current->binding.input_pin->parent);
                 }
             }

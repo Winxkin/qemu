@@ -32,25 +32,26 @@ typedef void (*vst_port_callback_t)(uint32_t value, void *context, void *parent)
 // GPIO Pin structure
 typedef struct vst_gpio_pin
 {
-    vst_gpio_mode mode;            // Pin mode (input/output)
-    vst_gpio_trigger trigger;      // Trigger type
-    vst_gpio_state state;          // Current state (LOW/HIGH)
-    const char *name;            // GPIO name (e.g., "GPIO1")
-    vst_gpio_callback_t callback;    // Callback for input pin when triggered
-    void *callback_context;      // Callback context (user data)
-    void *parent;                // Parent device
+    vst_gpio_mode mode;                 // Pin mode (input/output)
+    vst_gpio_trigger trigger;           // Trigger type
+    vst_gpio_trigger current_trigger;   // Current trigger state
+    vst_gpio_state state;               // Current state (LOW/HIGH)
+    const char *name;                   // GPIO name (e.g., "GPIO1")
+    vst_gpio_callback_t callback;       // Callback for input pin when triggered
+    void *callback_context;             // Callback context (user data)
+    void *parent;                       // Parent device
 } vst_gpio_pin;
 
 typedef struct vst_gpio_port 
 {
-    vst_gpio_mode mode;
-    const char *name;
-    uint32_t num_pins;
-    uint32_t value;
-    uint32_t mask;
-    vst_port_callback_t callback;
-    void *callback_context;
-    void *parent;                // Parent device
+    vst_gpio_mode mode;                 // Pin mode (input/output)
+    const char *name;                   // Port name 
+    uint32_t num_pins;                  // The number of pin in a port
+    uint32_t value;                     // Current value of the port
+    uint32_t mask;                      // Mask for the port
+    vst_port_callback_t callback;       // Callback for input port when triggered
+    void *callback_context;             // Callback context (user data)
+    void *parent;                       // Parent device
 } vst_gpio_port;
 
 typedef struct vst_port_binding 
