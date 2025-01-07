@@ -475,12 +475,10 @@ void dma_transfer(DMA_Channel *channel)
     // DMA transfering in here
     if(CTRL_MODE_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value) == 0x00) // Single transfer mode
     {
-        dma_set_run(dma_ch->id);
         dma_single_transfer(dma_ch);
     }
     else if(CTRL_MODE_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value) == 0x01) // block transfer mode
     {
-        dma_set_run(dma_ch->id);
         dma_block_transfer(dma_ch);
     }
 }
@@ -542,8 +540,6 @@ void dma_single_transfer(DMA_Channel *channel)
         }
     }
 
-    // Decrease size
-    dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value -= dma_byte;
     
     // modify DMA_DST
     if(CTRL_DSTINC_BIT(dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value) == 0x03)
@@ -565,6 +561,8 @@ void dma_single_transfer(DMA_Channel *channel)
         dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value -= dma_byte;
     }
 
+    // Decrease size
+    dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value -= dma_byte;
 }
 
 void dma_block_transfer(DMA_Channel *channel)
@@ -890,14 +888,11 @@ void dmac_trigger_channel(DMACdevice *dmac, int channel_id)
     {
         qemu_log("[dmac] DMA is busy !\n");
     }
-
-    printf("[dmac] Channel %d: Trigger signal sent\n", channel_id);
 }
 
 void *dma_channel_thread(void *arg)
 {
     DMA_Channel *dma_ch = (DMA_Channel *)arg;
-    // qemu_log("[dmac] DMA channel %d thread started\n", dma_ch->id);
     
     while(dma_ch->active) 
     {
@@ -906,27 +901,34 @@ void *dma_channel_thread(void *arg)
             // DMAC is disabled
             continue;
         }
-        // Acquire the spinlock
-        qemu_spin_lock(&spinlock);
-        qemu_mutex_lock(&dma_ch->mutex);
         
         // Wait for trigger signal ...
         qemu_log("[dmac] Channel %d: Waiting for trigger signal\n", dma_ch->id);
-        qemu_cond_wait(&dma_ch->cond, &dma_ch->mutex);
 
-        if (!dma_ch->active) {
-            qemu_mutex_unlock(&dma_ch->mutex);
-            qemu_spin_unlock(&spinlock);
-            break;
+        if(dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value == 0)
+        {
+            // Set DMA done status and clear DMAEN bit
+            dma_set_done(dma_ch->id);
+            set_bits(&dmac_reg_list[eDMAC_CTRL0_REG + dma_ch->id]->value, 0, 0, 0); // clear DMAEN bit
+            qemu_log("[dmac] Channel %d: DMA transfer is done\n", dma_ch->id);
+            continue; // jump to next iteration
         }
+        else
+        {
+            // request for next transfer
+            dma_set_req(dma_ch->id);
+        }
+        
+        // Acquire the spinlock
+        qemu_spin_lock(&spinlock);
+        qemu_mutex_lock(&dma_ch->mutex);
+        // watting for next trigger
+        qemu_cond_wait(&dma_ch->cond, &dma_ch->mutex);
 
         // Simulate DMA Transfer
         qemu_log("[dmac] Channel %d: Trigger received!", dma_ch->id);
-
-        // DMA transfering in here
-        dma_transfer(dma_ch);
-        
-        dma_set_req(dma_ch->id);
+        dma_set_run(dma_ch->id);   // Set DMA run status
+        dma_transfer(dma_ch);   // DMA transfering operation
 
         qemu_mutex_unlock(&dma_ch->mutex);
         qemu_spin_unlock(&spinlock);

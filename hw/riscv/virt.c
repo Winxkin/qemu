@@ -1127,9 +1127,9 @@ static void create_fdt_dmac(RISCVVirtState *s, const MemMapEntry *memmap,
     g_autofree char *name = NULL;
     MachineState *ms = MACHINE(s);
 
-    name = g_strdup_printf("/soc/sha3@%lx", (long)memmap[VIRT_DMAC].base);
+    name = g_strdup_printf("/soc/dmac@%lx", (long)memmap[VIRT_DMAC].base);
     qemu_fdt_add_subnode(ms->fdt, name);
-    qemu_fdt_setprop_string(ms->fdt, name, "compatible", "sha3");
+    qemu_fdt_setprop_string(ms->fdt, name, "compatible", "dmac");
     qemu_fdt_setprop_cells(ms->fdt, name, "reg",
         0x0, memmap[VIRT_DMAC].base,
         0x0, memmap[VIRT_DMAC].size);
