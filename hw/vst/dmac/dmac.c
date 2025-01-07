@@ -447,13 +447,15 @@ DMACdevice *gdmac; // Declare a global DMAC device
 /* Internal functions*/
 
 /* The DMA operations are depicted in here*/
-void dma_transfer(DMA_Channel *channel);
-void dma_single_transfer(DMA_Channel *channel);
-void dma_block_transfer(DMA_Channel *channel);
 void dma_set_error(uint32_t id);
 void dma_set_done(uint32_t id);
 void dma_set_run(uint32_t id);
 void dma_set_req(uint32_t id);
+void dma_transfer(DMA_Channel *channel);
+void dma_single_transfer(DMA_Channel *channel);
+void dma_block_transfer(DMA_Channel *channel);
+void dma_repeated_single_transfer(DMA_Channel *channel);
+void dma_repeated_block_transfer(DMA_Channel *channel);
 
 void dma_transfer(DMA_Channel *channel)
 {
@@ -481,6 +483,19 @@ void dma_transfer(DMA_Channel *channel)
     else if(CTRL_MODE_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x01) // block transfer mode
     {
         dma_block_transfer(dma_ch);
+    }
+    else if(CTRL_MODE_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x04) // repeated single transfer mode
+    {
+        dma_repeated_single_transfer(dma_ch);
+    }
+    else if(CTRL_MODE_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x05) // repeated block transfer mode
+    {
+        dma_repeated_block_transfer(dma_ch);
+    }
+    else
+    {
+        qemu_log("[dmac] (Error) Channel %d: Unsupported mode\n", dma_ch->id);
+        dma_set_error(dma_ch->id);
     }
 }
 
@@ -586,6 +601,10 @@ void dma_single_transfer(DMA_Channel *channel)
         dma_set_done(dma_ch->id);
         set_bits(&dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value, 0, 0, 0); // clear DMAEN bit
         qemu_log("[dmac] Channel %d: DMA transfer is done\n", dma_ch->id);
+
+        dma_ch->size = dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value;
+        dma_ch->src_addr = dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value;
+        dma_ch->dst_addr = dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value;
     }
     else
     {
@@ -598,7 +617,334 @@ void dma_block_transfer(DMA_Channel *channel)
 {
     DMA_Channel *dma_ch = (DMA_Channel *)channel;
     qemu_log("[dmac] Channel %d: Block transfer mode\n", dma_ch->id);
+    uint32_t dma_byte;
+
+    while(dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value != 0)
+    {
+        if(CTRL_SRCBYTE_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value))
+        {
+            dma_byte = 1;
+            hwaddr src_addr = (hwaddr)dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value ;     // src memory address
+            hwaddr dst_addr = (hwaddr)dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value ;     // src memory address
+            MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
+            char buffer;                                              // buffer 1 bytes
+            MemTxResult result;
+
+            // DMA read from source address
+            result = address_space_rw(&address_space_memory, src_addr, attrs, &buffer, dma_byte, false);
+
+            if (result != MEMTX_OK) 
+            {
+                qemu_log("[dmac] Read data from 0x%lX failed with result: %d\n",src_addr, result);
+            }
+            else
+            {
+                qemu_log("[dmac] Read data from 0x%lX: 0x%X\n",src_addr, buffer);
+            }
+
+            // DMA write to destination address
+            result = address_space_write(&address_space_memory, dst_addr, attrs, &buffer, dma_byte);
+
+            if (result != MEMTX_OK) 
+            {
+                qemu_log("[dmac] Write data to 0x%lX failed with result: %d\n",dst_addr, result);
+            }
+            else
+            {
+                qemu_log("[dmac] Write data to 0x%lX: 0x%X\n",dst_addr, buffer);
+            }
+        }
+        else
+        {
+            dma_byte = 4;
+            hwaddr src_addr = (hwaddr)dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value ;     // src memory address
+            hwaddr dst_addr = (hwaddr)dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value ;     // src memory address
+            MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
+            uint32_t buffer;                                              // buffer 4 bytes
+            MemTxResult result;
+
+            // DMA read from source address
+            result = address_space_rw(&address_space_memory, src_addr, attrs, &buffer, dma_byte, false);
+
+            if (result != MEMTX_OK) 
+            {
+                qemu_log("[dmac] Read data from 0x%lX failed with result: %d\n",src_addr, result);
+            }
+            else
+            {
+                qemu_log("[dmac] Read data from 0x%lX: 0x%X\n",src_addr, buffer);
+            }
+
+            // DMA write to destination address
+            result = address_space_write(&address_space_memory, dst_addr, attrs, &buffer, dma_byte);
+
+            if (result != MEMTX_OK) 
+            {
+                qemu_log("[dmac] Write data to 0x%lX failed with result: %d\n",dst_addr, result);
+            }
+            else
+            {
+                qemu_log("[dmac] Write data to 0x%lX: 0x%X\n",dst_addr, buffer);
+            }
+        }
+
+        // modify DMA_DST
+        if(CTRL_DSTINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x03)
+        {
+            dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value += dma_byte;
+        }
+        else if(CTRL_DSTINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x02)
+        {
+            dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value -= dma_byte;
+        }
+
+        // modify DMA_SRC
+        if(CTRL_SRCINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x03)
+        {
+            dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value += dma_byte;
+        }
+        else if(CTRL_SRCINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x02)
+        {
+            dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value -= dma_byte;
+        }
+
+        // Decrease size
+        dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value -= dma_byte;
+        if(dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value == 0)
+        {
+            // Set DMA done status and clear DMAEN bit
+            dma_set_done(dma_ch->id);
+            set_bits(&dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value, 0, 0, 0); // clear DMAEN bit
+            qemu_log("[dmac] Channel %d: DMA transfer is done\n", dma_ch->id);
+            dma_ch->size = dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value;
+            dma_ch->src_addr = dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value;
+            dma_ch->dst_addr = dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value;
+            break;
+        }
+    }
+
 }
+
+void dma_repeated_single_transfer(DMA_Channel *channel)
+{
+    DMA_Channel *dma_ch = (DMA_Channel *)channel;
+    qemu_log("[dmac] Channel %d: Repeated single transfer mode\n", dma_ch->id);
+    uint32_t dma_byte;
+
+    if(CTRL_SRCBYTE_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value))
+    {
+        dma_byte = 1;
+        hwaddr src_addr = (hwaddr)dma_ch->src_addr;     // src memory address
+        hwaddr dst_addr = (hwaddr)dma_ch->dst_addr;     // dst memory address
+        MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
+        char buffer;                                              // buffer 1 bytes
+        MemTxResult result;
+
+        // DMA read from source address
+        result = address_space_rw(&address_space_memory, src_addr, attrs, &buffer, dma_byte, false);
+
+        if (result != MEMTX_OK) 
+        {
+            qemu_log("[dmac] Read data from 0x%lX failed with result: %d\n",src_addr, result);
+        }
+        else
+        {
+            qemu_log("[dmac] Read data from 0x%lX: 0x%X\n",src_addr, buffer);
+        }
+
+        // DMA write to destination address
+        result = address_space_write(&address_space_memory, dst_addr, attrs, &buffer, dma_byte);
+
+        if (result != MEMTX_OK) 
+        {
+            qemu_log("[dmac] Write data to 0x%lX failed with result: %d\n",dst_addr, result);
+        }
+        else
+        {
+            qemu_log("[dmac] Write data to 0x%lX: 0x%X\n",dst_addr, buffer);
+        }
+    }
+    else
+    {
+        dma_byte = 4;
+        hwaddr src_addr = (hwaddr)dma_ch->src_addr;     // src memory address
+        hwaddr dst_addr = (hwaddr)dma_ch->dst_addr;     // src memory address
+        MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
+        uint32_t buffer;                                              // buffer 4 bytes
+        MemTxResult result;
+
+        // DMA read from source address
+        result = address_space_rw(&address_space_memory, src_addr, attrs, &buffer, dma_byte, false);
+
+        if (result != MEMTX_OK) 
+        {
+            qemu_log("[dmac] Read data from 0x%lX failed with result: %d\n",src_addr, result);
+        }
+        else
+        {
+            qemu_log("[dmac] Read data from 0x%lX: 0x%X\n",src_addr, buffer);
+        }
+        
+        // DMA write to destination address
+        result = address_space_write(&address_space_memory, dst_addr, attrs, &buffer, dma_byte);
+
+        if (result != MEMTX_OK) 
+        {
+            qemu_log("[dmac] Write data to 0x%lX failed with result: %d\n",dst_addr, result);
+        }
+        else
+        {
+            qemu_log("[dmac] Write data to 0x%lX: 0x%X\n",dst_addr, buffer);
+        }
+    }
+
+    
+    // modify DMA_DST
+    if(CTRL_DSTINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x03)
+    {
+        dma_ch->src_addr += dma_byte;
+    }
+    else if(CTRL_DSTINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x02)
+    {
+        dma_ch->dst_addr -= dma_byte;
+    }
+
+    // modify DMA_SRC
+    if(CTRL_SRCINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x03)
+    {
+        dma_ch->src_addr += dma_byte;
+    }
+    else if(CTRL_SRCINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x02)
+    {
+        dma_ch->dst_addr -= dma_byte;
+    }
+
+    // Decrease size
+    dma_ch->size -= dma_byte;
+    if(dma_ch->size == 0)
+    {
+        // Set DMA done status and clear DMAEN bit
+        dma_set_done(dma_ch->id);
+        qemu_log("[dmac] Channel %d: DMA transfer is done\n", dma_ch->id);
+        // request for next repeated transfer
+        dma_set_req(dma_ch->id);
+    }
+    else
+    {
+        // request for next transfer
+        dma_set_req(dma_ch->id);
+    }
+}
+
+void dma_repeated_block_transfer(DMA_Channel *channel)
+{
+    DMA_Channel *dma_ch = (DMA_Channel *)channel;
+    qemu_log("[dmac] Channel %d: Block transfer mode\n", dma_ch->id);
+    uint32_t dma_byte;
+
+    while(dmac_reg_list[eDMA_SIZE0_REG + dma_ch->id]->value != 0)
+    {
+        if(CTRL_SRCBYTE_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value))
+        {
+            dma_byte = 1;
+            hwaddr src_addr = (hwaddr)dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value ;     // src memory address
+            hwaddr dst_addr = (hwaddr)dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value ;     // src memory address
+            MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
+            char buffer;                                              // buffer 1 bytes
+            MemTxResult result;
+
+            // DMA read from source address
+            result = address_space_rw(&address_space_memory, src_addr, attrs, &buffer, dma_byte, false);
+
+            if (result != MEMTX_OK) 
+            {
+                qemu_log("[dmac] Read data from 0x%lX failed with result: %d\n",src_addr, result);
+            }
+            else
+            {
+                qemu_log("[dmac] Read data from 0x%lX: 0x%X\n",src_addr, buffer);
+            }
+
+            // DMA write to destination address
+            result = address_space_write(&address_space_memory, dst_addr, attrs, &buffer, dma_byte);
+
+            if (result != MEMTX_OK) 
+            {
+                qemu_log("[dmac] Write data to 0x%lX failed with result: %d\n",dst_addr, result);
+            }
+            else
+            {
+                qemu_log("[dmac] Write data to 0x%lX: 0x%X\n",dst_addr, buffer);
+            }
+        }
+        else
+        {
+            dma_byte = 4;
+            hwaddr src_addr = (hwaddr)dmac_reg_list[eDMA_SRC0_REG + dma_ch->id]->value ;     // src memory address
+            hwaddr dst_addr = (hwaddr)dmac_reg_list[eDMA_DST0_REG + dma_ch->id]->value ;     // src memory address
+            MemTxAttrs attrs = MEMTXATTRS_UNSPECIFIED;                  // Default attributes
+            uint32_t buffer;                                              // buffer 4 bytes
+            MemTxResult result;
+
+            // DMA read from source address
+            result = address_space_rw(&address_space_memory, src_addr, attrs, &buffer, dma_byte, false);
+
+            if (result != MEMTX_OK) 
+            {
+                qemu_log("[dmac] Read data from 0x%lX failed with result: %d\n",src_addr, result);
+            }
+            else
+            {
+                qemu_log("[dmac] Read data from 0x%lX: 0x%X\n",src_addr, buffer);
+            }
+
+            // DMA write to destination address
+            result = address_space_write(&address_space_memory, dst_addr, attrs, &buffer, dma_byte);
+
+            if (result != MEMTX_OK) 
+            {
+                qemu_log("[dmac] Write data to 0x%lX failed with result: %d\n",dst_addr, result);
+            }
+            else
+            {
+                qemu_log("[dmac] Write data to 0x%lX: 0x%X\n",dst_addr, buffer);
+            }
+        }
+
+        // modify DMA_DST
+        if(CTRL_DSTINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x03)
+        {
+            dma_ch->src_addr += dma_byte;
+        }
+        else if(CTRL_DSTINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x02)
+        {
+            dma_ch->dst_addr -= dma_byte;
+        }
+
+        // modify DMA_SRC
+        if(CTRL_SRCINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x03)
+        {
+            dma_ch->src_addr += dma_byte;
+        }
+        else if(CTRL_SRCINC_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value) == 0x02)
+        {
+            dma_ch->dst_addr -= dma_byte;
+        }
+
+        // Decrease size
+        dma_ch->size -= dma_byte;
+        if(dma_ch->size == 0)
+        {
+            // Set DMA done status and clear DMAEN bit
+            dma_set_done(dma_ch->id);
+            qemu_log("[dmac] Channel %d: DMA transfer is done\n", dma_ch->id);
+            // request for next repeated transfer
+            dma_set_req(dma_ch->id);
+            break;
+        }
+    }
+}
+
 
 void dma_set_error(uint32_t id)
 {
@@ -893,10 +1239,8 @@ void dma_set_req(uint32_t id)
     vst_gpio_write(&gdmac->ch[id].O_req, GPIO_LOW);
 }
 
-/* DMA thread */
-// void *dma_channel_thread(void *arg);
+/* DMA Triggered operation */
 void dmac_trigger_channel(DMACdevice *dmac, int channel_id);
-
 void dmac_trigger_channel(DMACdevice *dmac, int channel_id) 
 {
     if (channel_id < 0 || channel_id >= 8) 
@@ -907,46 +1251,10 @@ void dmac_trigger_channel(DMACdevice *dmac, int channel_id)
     usleep(5000);   // Sleep 5ms to wait for the next trigger signal
     DMA_Channel *channel = &dmac->ch_op[channel_id];
 
-    // qemu_mutex_lock(&channel->mutex);
-    // qemu_cond_signal(&channel->cond);   // Signal the channel thread
     dma_set_run(channel->id);   // Set DMA run status
     dma_transfer(channel);   // DMA transfering operation
-    // qemu_mutex_unlock(&channel->mutex);
+
 }
-
-// void *dma_channel_thread(void *arg)
-// {
-//     // DMA_Channel *dma_ch = (DMA_Channel *)arg;
-    
-//     // while(dma_ch->active) 
-//     // {
-//     //     if(!CTRL_DMAEN_BIT(dmac_reg_list[eDMA_CTRL0_REG + dma_ch->id]->value))
-//     //     {
-//     //         // DMAC is disabled
-//     //         continue;
-//     //     }
-        
-//     //     // Acquire the spinlock
-//     //     qemu_spin_lock(&spinlock);
-//     //     qemu_mutex_lock(&dma_ch->mutex);
-//     //     // watting for next trigger
-//     //     qemu_log("[dmac] Channel %d: Waiting for trigger signal\n", dma_ch->id);
-//     //     dma_set_req(dma_ch->id);   // Set DMA request signal
-//     //     qemu_cond_wait(&dma_ch->cond, &dma_ch->mutex);
-
-//     //     // Simulate DMA Transfer
-//     //     qemu_log("[dmac] Channel %d: Trigger received!\n", dma_ch->id);
-//     //     dma_set_run(dma_ch->id);   // Set DMA run status
-//     //     dma_transfer(dma_ch);   // DMA transfering operation
-
-//     //     qemu_mutex_unlock(&dma_ch->mutex);
-//     //     qemu_spin_unlock(&spinlock);
-//     // }
-
-//     // qemu_log("[dmac] Channel %d: Shutting down\n", dma_ch->id);
-//     // return NULL;
-// }
-
 
 /*Callback register*/
 void cb_dmac_ctrl0_reg(void *opaque, Register32 *reg, uint32_t value);
@@ -957,6 +1265,30 @@ void cb_dmac_ctrl4_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dmac_ctrl5_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dmac_ctrl6_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dmac_ctrl7_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_src0_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_src1_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_src2_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_src3_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_src4_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_src5_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_src6_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_src7_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_dst0_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_dst1_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_dst2_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_dst3_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_dst4_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_dst5_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_dst6_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_dst7_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_size0_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_size1_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_size2_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_size3_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_size4_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_size5_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_size6_reg(void *opaque, Register32 *reg, uint32_t value);
+void cb_dma_size7_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dma_trigger0_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dma_trigger1_reg(void *opaque, Register32 *reg, uint32_t value);
 void cb_dma_trigger2_reg(void *opaque, Register32 *reg, uint32_t value);
@@ -1238,6 +1570,150 @@ void cb_dmac_ctrl7_reg(void *opaque, Register32 *reg, uint32_t value)
         qemu_log("[dmac] (Error) DMA channel 7: Invalid mode\n");
         dma_set_error(7);
     }
+}
+
+void cb_dma_src0_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[0].src_addr = value;
+}
+
+void cb_dma_src1_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[1].src_addr = value;
+}
+
+void cb_dma_src2_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[2].src_addr = value;
+}
+
+void cb_dma_src3_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[3].src_addr = value;
+}
+
+void cb_dma_src4_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[4].src_addr = value;
+}
+
+void cb_dma_src5_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[5].src_addr = value;
+}
+
+void cb_dma_src6_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[6].src_addr = value;
+}
+
+void cb_dma_src7_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[7].src_addr = value;
+}
+
+void cb_dma_dst0_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[0].dst_addr = value;
+}
+
+void cb_dma_dst1_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[1].dst_addr = value;
+}
+
+void cb_dma_dst2_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[2].dst_addr = value;
+}
+
+void cb_dma_dst3_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[3].dst_addr = value;
+}
+
+void cb_dma_dst4_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[4].dst_addr = value;
+}
+
+void cb_dma_dst5_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[5].dst_addr = value;
+}
+
+void cb_dma_dst6_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[6].dst_addr = value;
+}
+
+void cb_dma_dst7_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[7].dst_addr = value;
+}
+
+void cb_dma_size0_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[0].size = value;
+}
+
+void cb_dma_size1_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[1].size = value;
+}
+
+void cb_dma_size2_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[2].size = value;
+}
+
+void cb_dma_size3_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[3].size = value;
+}
+
+void cb_dma_size4_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[4].size = value;
+}
+
+void cb_dma_size5_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[5].size = value;
+}
+
+void cb_dma_size6_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[6].size = value;
+}
+
+void cb_dma_size7_reg(void *opaque, Register32 *reg, uint32_t value)
+{
+    DMACdevice *dmac = DMAC(opaque);
+    dmac->ch_op[7].size = value;
 }
 
 void cb_dma_trigger0_reg(void *opaque, Register32 *reg, uint32_t value)
@@ -1718,30 +2194,30 @@ void dmac_register_init(void)
     dmac_reg_list[eDMA_CFG1_REG] = create_register32("DMA_CFG1_REG", DMA_CFG1_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
     dmac_reg_list[eDMA_CFG2_REG] = create_register32("DMA_CFG2_REG", DMA_CFG2_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
     dmac_reg_list[eDMA_CFG3_REG] = create_register32("DMA_CFG3_REG", DMA_CFG3_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SRC0_REG] = create_register32("DMA_SRC0_REG", DMA_SRC0_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SRC1_REG] = create_register32("DMA_SRC1_REG", DMA_SRC1_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SRC2_REG] = create_register32("DMA_SRC2_REG", DMA_SRC2_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SRC3_REG] = create_register32("DMA_SRC3_REG", DMA_SRC3_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SRC4_REG] = create_register32("DMA_SRC4_REG", DMA_SRC4_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SRC5_REG] = create_register32("DMA_SRC5_REG", DMA_SRC5_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SRC6_REG] = create_register32("DMA_SRC6_REG", DMA_SRC6_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SRC7_REG] = create_register32("DMA_SRC7_REG", DMA_SRC7_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_DST0_REG] = create_register32("DMA_DST0_REG", DMA_DST0_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_DST1_REG] = create_register32("DMA_DST1_REG", DMA_DST1_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_DST2_REG] = create_register32("DMA_DST2_REG", DMA_DST2_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_DST3_REG] = create_register32("DMA_DST3_REG", DMA_DST3_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_DST4_REG] = create_register32("DMA_DST4_REG", DMA_DST4_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_DST5_REG] = create_register32("DMA_DST5_REG", DMA_DST5_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_DST6_REG] = create_register32("DMA_DST6_REG", DMA_DST6_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_DST7_REG] = create_register32("DMA_DST7_REG", DMA_DST7_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SIZE0_REG] = create_register32("DMA_SIZE0_REG", DMA_SIZE0_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SIZE1_REG] = create_register32("DMA_SIZE1_REG", DMA_SIZE1_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SIZE2_REG] = create_register32("DMA_SIZE2_REG", DMA_SIZE2_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SIZE3_REG] = create_register32("DMA_SIZE3_REG", DMA_SIZE3_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SIZE4_REG] = create_register32("DMA_SIZE4_REG", DMA_SIZE4_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SIZE5_REG] = create_register32("DMA_SIZE5_REG", DMA_SIZE5_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SIZE6_REG] = create_register32("DMA_SIZE6_REG", DMA_SIZE6_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
-    dmac_reg_list[eDMA_SIZE7_REG] = create_register32("DMA_SIZE7_REG", DMA_SIZE7_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, NULL);
+    dmac_reg_list[eDMA_SRC0_REG] = create_register32("DMA_SRC0_REG", DMA_SRC0_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_src0_reg);
+    dmac_reg_list[eDMA_SRC1_REG] = create_register32("DMA_SRC1_REG", DMA_SRC1_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_src1_reg);
+    dmac_reg_list[eDMA_SRC2_REG] = create_register32("DMA_SRC2_REG", DMA_SRC2_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_src2_reg);
+    dmac_reg_list[eDMA_SRC3_REG] = create_register32("DMA_SRC3_REG", DMA_SRC3_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_src3_reg);
+    dmac_reg_list[eDMA_SRC4_REG] = create_register32("DMA_SRC4_REG", DMA_SRC4_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_src4_reg);
+    dmac_reg_list[eDMA_SRC5_REG] = create_register32("DMA_SRC5_REG", DMA_SRC5_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_src5_reg);
+    dmac_reg_list[eDMA_SRC6_REG] = create_register32("DMA_SRC6_REG", DMA_SRC6_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_src6_reg);
+    dmac_reg_list[eDMA_SRC7_REG] = create_register32("DMA_SRC7_REG", DMA_SRC7_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_src7_reg);
+    dmac_reg_list[eDMA_DST0_REG] = create_register32("DMA_DST0_REG", DMA_DST0_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_dst0_reg);
+    dmac_reg_list[eDMA_DST1_REG] = create_register32("DMA_DST1_REG", DMA_DST1_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_dst1_reg);
+    dmac_reg_list[eDMA_DST2_REG] = create_register32("DMA_DST2_REG", DMA_DST2_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_dst2_reg);
+    dmac_reg_list[eDMA_DST3_REG] = create_register32("DMA_DST3_REG", DMA_DST3_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_dst3_reg);
+    dmac_reg_list[eDMA_DST4_REG] = create_register32("DMA_DST4_REG", DMA_DST4_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_dst4_reg);
+    dmac_reg_list[eDMA_DST5_REG] = create_register32("DMA_DST5_REG", DMA_DST5_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_dst5_reg);
+    dmac_reg_list[eDMA_DST6_REG] = create_register32("DMA_DST6_REG", DMA_DST6_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_dst6_reg);
+    dmac_reg_list[eDMA_DST7_REG] = create_register32("DMA_DST7_REG", DMA_DST7_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_dst7_reg);
+    dmac_reg_list[eDMA_SIZE0_REG] = create_register32("DMA_SIZE0_REG", DMA_SIZE0_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_size0_reg);
+    dmac_reg_list[eDMA_SIZE1_REG] = create_register32("DMA_SIZE1_REG", DMA_SIZE1_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_size1_reg);
+    dmac_reg_list[eDMA_SIZE2_REG] = create_register32("DMA_SIZE2_REG", DMA_SIZE2_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_size2_reg);
+    dmac_reg_list[eDMA_SIZE3_REG] = create_register32("DMA_SIZE3_REG", DMA_SIZE3_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_size3_reg);
+    dmac_reg_list[eDMA_SIZE4_REG] = create_register32("DMA_SIZE4_REG", DMA_SIZE4_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_size4_reg);
+    dmac_reg_list[eDMA_SIZE5_REG] = create_register32("DMA_SIZE5_REG", DMA_SIZE5_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_size5_reg);
+    dmac_reg_list[eDMA_SIZE6_REG] = create_register32("DMA_SIZE6_REG", DMA_SIZE6_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_size6_reg);
+    dmac_reg_list[eDMA_SIZE7_REG] = create_register32("DMA_SIZE7_REG", DMA_SIZE7_REG, REG_READ_WRITE, 0, 0xFFFFFFFF, cb_dma_size7_reg);
     dmac_reg_list[eDMA_STATUS0_REG] = create_register32("DMA_STATUS0_REG", DMA_STATUS0_REG, REG_READ_ONLY, 0, 0xFFFFFFFF, NULL);
     dmac_reg_list[eDMA_STATUS1_REG] = create_register32("DMA_STATUS1_REG", DMA_STATUS1_REG, REG_READ_ONLY, 0, 0xFFFFFFFF, NULL);
     dmac_reg_list[eDMA_STATUS2_REG] = create_register32("DMA_STATUS2_REG", DMA_STATUS2_REG, REG_READ_ONLY, 0, 0xFFFFFFFF, NULL);

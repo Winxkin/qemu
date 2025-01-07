@@ -31,10 +31,9 @@ typedef struct DMAIOCH
 // DMA Channel Structure
 typedef struct {
     int id;                 // Channel ID
-    // uint8_t active;            // Channel activity state
-    // QemuCond cond;          // Condition variable for trigger
-    // QemuMutex mutex;        // Mutex for channel operation
-    // QemuThread thread;     // Thread for channel operation
+    uint32_t src_addr;      // Source Address
+    uint32_t dst_addr;      // Destination Address
+    uint32_t size;          // Transfer Size
 } DMA_Channel;
 
 typedef struct DMACdevice {
