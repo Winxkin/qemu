@@ -1011,58 +1011,141 @@ void dma_set_done(uint32_t id)
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 0, 0); // set done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 1, 1); // clear run bit 
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL0_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH0SEL_BIT(dmac_reg_list[eDMA_CFG0_REG]->value);
+                    // level sensitive output signal O_done
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                }
                 break;
             }
         case 1:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 16, 16); // set done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 17, 17); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL1_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH1SEL_BIT(dmac_reg_list[eDMA_CFG0_REG]->value);
+                    // level sensitive output signal O_done
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                }
                 break;
             }
         case 2:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 0, 0); // set done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 1, 1); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL2_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH2SEL_BIT(dmac_reg_list[eDMA_CFG1_REG]->value);
+                    // level sensitive output signal O_done
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                }
                 break;
             }
         case 3:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 16, 16); // set done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 17, 17); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL3_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH3SEL_BIT(dmac_reg_list[eDMA_CFG1_REG]->value);
+                    // level sensitive output signal O_done
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                }
                 break;
             }
         case 4:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 0, 0); // set done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 1, 1); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL4_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH4SEL_BIT(dmac_reg_list[eDMA_CFG2_REG]->value);
+                    // level sensitive output signal O_done
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                }
                 break;
             }
         case 5:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 16, 16); // set done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 17, 17); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL5_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH5SEL_BIT(dmac_reg_list[eDMA_CFG2_REG]->value);
+                    // level sensitive output signal O_done
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                }
                 break;
             }
         case 6:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 0, 0); // set done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 1, 1); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL6_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH6SEL_BIT(dmac_reg_list[eDMA_CFG3_REG]->value);
+                    // level sensitive output signal O_done
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                }
                 break;
             }
         case 7:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 16, 16); // set done bit
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 17, 17); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL7_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH7SEL_BIT(dmac_reg_list[eDMA_CFG3_REG]->value);
+                    // level sensitive output signal O_done
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_done[index], GPIO_LOW);
+                }
                 break;
             }
+        default:
+            return;
     }
-
-    // edge triggered output signal O_done
-    vst_gpio_write(&gdmac->ch[id].O_done, GPIO_LOW);
-    usleep(1000);
-    vst_gpio_write(&gdmac->ch[id].O_done, GPIO_HIGH);
-    usleep(1000);
-    vst_gpio_write(&gdmac->ch[id].O_done, GPIO_LOW);
 }
 
 void dma_set_run(uint32_t id)
@@ -1144,58 +1227,139 @@ void dma_set_req(uint32_t id)
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 2, 2); // set req bit
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 1, 1); // clear run bit 
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL0_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH0SEL_BIT(dmac_reg_list[eDMA_CFG0_REG]->value);
+                    // edge triggered output signal O_req
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                }
                 break;
             }
         case 1:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 1, 18, 18); // set req bit
                 set_bits(&dmac_reg_list[eDMA_STATUS0_REG]->value, 0, 17, 17); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL1_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH1SEL_BIT(dmac_reg_list[eDMA_CFG0_REG]->value);
+                    // edge triggered output signal O_req
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                }
                 break;
             }
         case 2:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 2, 2); // set req bit
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 1, 1); // clear run bit
+                
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL2_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH2SEL_BIT(dmac_reg_list[eDMA_CFG1_REG]->value);
+                    // edge triggered output signal O_req
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                }
                 break;
             }
         case 3:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 1, 18, 18); // set req bit
                 set_bits(&dmac_reg_list[eDMA_STATUS1_REG]->value, 0, 17, 17); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL3_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH3SEL_BIT(dmac_reg_list[eDMA_CFG1_REG]->value);
+                    // edge triggered output signal O_req
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                }
                 break;
             }
         case 4:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 2, 2); // set req bit
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 1, 1); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL4_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH4SEL_BIT(dmac_reg_list[eDMA_CFG2_REG]->value);
+                    // edge triggered output signal O_req
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                }
                 break;
             }
         case 5:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 1, 18, 18); // set req bit
                 set_bits(&dmac_reg_list[eDMA_STATUS2_REG]->value, 0, 17, 17); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL5_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH5SEL_BIT(dmac_reg_list[eDMA_CFG2_REG]->value);
+                    // edge triggered output signal O_req
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                }
                 break;
             }
         case 6:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 2, 2); // set req bit
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 1, 1); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL6_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH6SEL_BIT(dmac_reg_list[eDMA_CFG3_REG]->value);
+                    // edge triggered output signal O_req
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                }
                 break;
             }
         case 7:
             {
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 1, 18, 18); // set req bit
                 set_bits(&dmac_reg_list[eDMA_STATUS3_REG]->value, 0, 17, 17); // clear run bit
+
+                if(CTRL_DMALEVEL_BIT(dmac_reg_list[eDMA_CTRL7_REG]->value) == 0x00)
+                {
+                    uint32_t index = CFG_CH7SEL_BIT(dmac_reg_list[eDMA_CFG3_REG]->value);
+                    // edge triggered output signal O_req
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_HIGH);
+                    usleep(1000);
+                    vst_gpio_write(&gdmac->ch[id].O_req[index], GPIO_LOW);
+                }
                 break;
             }
     }
-
-    // edge triggered output signal O_req
-    vst_gpio_write(&gdmac->ch[id].O_req, GPIO_LOW);
-    usleep(1000);
-    vst_gpio_write(&gdmac->ch[id].O_req, GPIO_HIGH);
-    usleep(1000);
-    vst_gpio_write(&gdmac->ch[id].O_req, GPIO_LOW);
 }
 
 /* DMA Triggered operation */
@@ -2273,23 +2437,117 @@ void dmac_gpio_init(DMACdevice *dmac)
         vst_gpio_init(&dmac->ch[7].I_trigger[i], name, GPIO_MODE_INPUT, cb_ch7_trigger_input, &dmac->ch[7].I_trigger[i], dmac);
     }
 
-    vst_gpio_init(&dmac->ch[0].O_done, "O_ch0_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[1].O_done, "O_ch1_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[2].O_done, "O_ch2_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[3].O_done, "O_ch3_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[4].O_done, "O_ch4_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[5].O_done, "O_ch5_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[6].O_done, "O_ch6_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[7].O_done, "O_ch7_done", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    for (uint32_t i = 0; i < 32; i++) 
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch0_done%d", i);
+        vst_gpio_init(&dmac->ch[0].O_done[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+    
+    for (uint32_t i = 0; i < 32; i++) 
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch1_done%d", i);
+        vst_gpio_init(&dmac->ch[1].O_done[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
 
-    vst_gpio_init(&dmac->ch[0].O_req, "O_ch0_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[1].O_req, "O_ch1_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[2].O_req, "O_ch2_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[3].O_req, "O_ch3_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[4].O_req, "O_ch4_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[5].O_req, "O_ch5_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[6].O_req, "O_ch6_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
-    vst_gpio_init(&dmac->ch[7].O_req, "O_ch7_req", GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    for (uint32_t i = 0; i < 32; i++) 
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch2_done%d", i);
+        vst_gpio_init(&dmac->ch[2].O_done[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+    
+    for (uint32_t i = 0; i < 32; i++) 
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch3_done%d", i);
+        vst_gpio_init(&dmac->ch[3].O_done[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+
+    for (uint32_t i = 0; i < 32; i++) 
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch4_done%d", i);
+        vst_gpio_init(&dmac->ch[4].O_done[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+
+    for (uint32_t i = 0; i < 32; i++) 
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch5_done%d", i);
+        vst_gpio_init(&dmac->ch[5].O_done[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+
+    for (uint32_t i = 0; i < 32; i++) 
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch6_done%d", i);
+        vst_gpio_init(&dmac->ch[6].O_done[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+
+    for (uint32_t i = 0; i < 32; i++) 
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch7_done%d", i);
+        vst_gpio_init(&dmac->ch[7].O_done[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+
+    for (uint32_t i = 0; i < 32; i++) 
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch0_req%d", i);
+        vst_gpio_init(&dmac->ch[0].O_req[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+    
+    for (uint32_t i = 0; i < 32; i++) 
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch1_req%d", i);
+        vst_gpio_init(&dmac->ch[1].O_req[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+
+    for(uint32_t i = 0; i < 32; i++)
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch2_req%d", i);
+        vst_gpio_init(&dmac->ch[2].O_req[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+
+    for(uint32_t i = 0; i < 32; i++)
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch3_req%d", i);
+        vst_gpio_init(&dmac->ch[3].O_req[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+
+    for(uint32_t i = 0; i < 32; i++)
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch4_req%d", i);
+        vst_gpio_init(&dmac->ch[4].O_req[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+
+    for(uint32_t i = 0; i < 32; i++)
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch5_req%d", i);
+        vst_gpio_init(&dmac->ch[5].O_req[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+
+    for(uint32_t i = 0; i < 32; i++)
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch6_req%d", i);
+        vst_gpio_init(&dmac->ch[6].O_req[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
+
+    for(uint32_t i = 0; i < 32; i++)
+    {
+        char name[20];
+        snprintf(name, sizeof(name), "O_ch7_req%d", i);
+        vst_gpio_init(&dmac->ch[7].O_req[i], name, GPIO_MODE_OUTPUT, NULL, NULL, NULL);
+    }
 }
 
 /*This is template code for registration new device in qemu*/
@@ -2349,20 +2607,7 @@ static void dmac_realize(DeviceState *dev, Error **errp)
 
 static void dmac_unrealize(DeviceState *dev)
 {
-    // DMACdevice *dmac = DMAC(dev);
-
-    // for(uint i =0 ; i < 8; i++)
-    // {
-    //     qemu_thread_join(&dmac->ch_op[i].thread);
-    // }
-
-    // for(uint i =0 ; i < 8; i++)
-    // {
-    //     qemu_mutex_destroy(&dmac->ch_op[i].mutex);
-    //     qemu_cond_destroy(&dmac->ch_op[i].cond);
-
-    // }
-    // qemu_spin_destroy(&spinlock);
+    
 }
 
 DMACdevice *dmac_init(MemoryRegion *address_space, hwaddr base)
@@ -2386,16 +2631,7 @@ DMACdevice *dmac_init(MemoryRegion *address_space, hwaddr base)
     qemu_spin_init(&spinlock);
     for(uint i =0 ; i < 8; i++)
     {
-    //     dmac->dma_state[i] = eDMA_STATE_REQ;
-    //     dmac->ch_op[i].active = 0x01;
         dmac->ch_op[i].id = i;
-
-    //     qemu_mutex_init(&dmac->ch_op[i].mutex);
-    //     qemu_cond_init(&dmac->ch_op[i].cond);
-
-    //     qemu_thread_create(&dmac->ch_op[i].thread, "dma_channel_thread",
-    //                        dma_channel_thread, &dmac->ch_op[i], QEMU_THREAD_JOINABLE);
-
     }
 
     gdmac = dmac;

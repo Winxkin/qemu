@@ -24,8 +24,8 @@ typedef enum DMA_STATE
 typedef struct DMAIOCH
 {
     vst_gpio_pin I_trigger[32];
-    vst_gpio_pin O_done;
-    vst_gpio_pin O_req;
+    vst_gpio_pin O_done[32];
+    vst_gpio_pin O_req[32];
 } DMAIOCH;
 
 // DMA Channel Structure
